@@ -1,0 +1,1 @@
+<h1>Hello Child theme</h1>

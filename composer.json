@@ -1,0 +1,40 @@
+{
+  "name": "yivic/yivic-lite-child",
+  "description": "Child theme for Yivic Lite",
+  "type": "wordpress-theme",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/manhphuc/yivic-lite-child",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "Phuc Nguyen",
+      "email": "manhphucofficial@yahoo.com",
+      "homepage": "https://github.com/manhphuc",
+      "role": "Developer"
+    }
+  ],
+  "keywords": ["yivic", "theme", "wordpress", "blog"],
+  "require": {
+    "php": "^8.1",
+    "illuminate/container": "^11.0",
+    "illuminate/events": "^11.0",
+    "illuminate/filesystem": "^11.0",
+    "illuminate/support": "^11.0",
+    "illuminate/view": "^11.0",
+    "illuminate/config": "^11.0",
+    "symfony/finder": "^7.0",
+    "symfony/translation": "^7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Yivic\\YivicLiteChild\\": "src/"
+    },
+    "files": [
+      "src/helpers.php"
+    ]
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "classmap-authoritative": true
+  }
+}
