@@ -78,6 +78,38 @@ return [
     'themeSlug' => 'yivic-lite-child',
 
     // ------------------------------------------------------------------
+    // Views (Blade / Illuminate\View)
+    // ------------------------------------------------------------------
+    // Configure view resolution and Blade compilation cache.
+    //
+    // Why this exists:
+    // - Enables Laravel-style rendering: view('home', [...]).
+    // - Allows child theme to override templates cleanly.
+    // - Provides parent theme fallback without duplicating templates.
+    // - Centralizes view paths/cache so the kernel stays config-driven.
+    //
+    // Resolution order (first match wins):
+    // 1) Child theme:  <child>/resources/views
+    // 2) Parent theme: <parent>/resources/views
+    //
+    // Compiled views:
+    // - Blade templates (*.blade.php) are compiled into plain PHP and stored
+    //   under the "compiled" directory for performance.
+    // - This directory must be writable (local/dev) and should be ignored in Git.
+    //
+    'view' => [
+        // View search paths (child-first, then parent as fallback).
+        'paths' => [
+            get_stylesheet_directory() . '/resources/views',
+            get_template_directory()   . '/resources/views',
+        ],
+
+        // Blade compiled cache directory.
+        // Keep this inside the child theme so overrides remain isolated.
+        'compiled' => get_stylesheet_directory() . '/storage/framework/views',
+    ],
+
+    // ------------------------------------------------------------------
     // Extension point
     // ------------------------------------------------------------------
     // Reserved for future service providers or runtime bindings.

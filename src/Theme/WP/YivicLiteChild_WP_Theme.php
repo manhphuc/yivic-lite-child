@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace Yivic\YivicLiteChild\Theme\WP;
 
+use Yivic\YivicLiteChild\Foundation\Application as ThemeApplication;
 use Yivic\YivicLiteChild\App\Support\Traits\YivicLiteChildTransTrait;
 use Yivic\YivicLiteChild\Theme\Concerns\HasThemeIdentity;
 use Yivic\YivicLiteChild\Theme\Concerns\HasChildThemeRoots;
@@ -44,6 +45,31 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
         // Hydrate new capabilities introduced by the child kernel
         $this->hydrateThemeIdentity( $config );
         $this->hydrateParentRoots( $config );
+
+        // ------------------------------------------------------------------
+        // Bootstrap Theme Application (DI + Providers)
+        // ------------------------------------------------------------------
+        // Expose globally for Laravel-like helpers: app(), view(), ...
+        //
+        // Important:
+        // - Boot once per request.
+        // - Keep this lightweight: the heavy bindings are inside providers.
+        //
+        // This will become the foundation for:
+        // - DatabaseServiceProvider
+        // - CacheServiceProvider
+        // - ConsoleKernel (CLI commands)
+        // - HttpKernel (routing/middleware)
+        // ------------------------------------------------------------------
+        $basePath = $this->child_path(); // <-- dùng trait HasChildThemeRoots
+        if ($basePath === '' && function_exists('get_stylesheet_directory')) {
+            $basePath = (string) get_stylesheet_directory();
+        }
+
+        $application = new ThemeApplication( $basePath );
+        $application->bootstrap();
+        $GLOBALS['yivic_theme_app'] = $application;
+
     }
 
     /**
@@ -122,6 +148,21 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
      * Runs after the parent theme has completed setup.
      */
     public function setup_theme(): void {
+
+        add_action( 'wp_footer', function () {
+            try {
+                $factory = app( \Illuminate\View\Factory::class );
+                $finder  = $factory->getFinder();
+
+                error_log( '[Blade] extensions=' . json_encode( $finder->getExtensions() ) );
+                error_log( '[Blade] find(test)=' . $finder->find( 'test' ) );
+
+                echo theme_view( 'test' );
+            } catch ( \Throwable $e ) {
+                error_log( 'Blade view error: ' . $e->getMessage() );
+            }
+        } );
+
         \load_child_theme_textdomain(
             $this->getTextDomain(),
             $this->child_path( 'languages' )
