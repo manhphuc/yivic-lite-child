@@ -101,7 +101,7 @@ return [
         // View search paths (child-first, then parent as fallback).
         'paths' => [
             get_stylesheet_directory() . '/resources/views',
-            get_template_directory()   . '/resources/views',
+            get_template_directory()   . '/views',
         ],
 
         // Blade compiled cache directory.

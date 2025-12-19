@@ -1,29 +1,23 @@
-<!doctype html>
-<html lang="vi">
+<!DOCTYPE html>
+<html {{ language_attributes() }}>
 <head>
-    <meta charset="utf-8">
+    <meta charset="{{ bloginfo('charset') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Yivic CodeMall')</title>
 
-    {{-- If your theme/plugin already enqueues CSS via WP, you can omit CSS tags here --}}
+    <title>@yield('title', get_bloginfo('name'))</title>
+
+    @wp_head
 </head>
-<body class="yivic-site">
-<header class="yivic-site__header">
-    <div class="yivic-site__container">
-        <a class="yivic-site__brand" href="/">Yivic CodeMall</a>
-    </div>
-</header>
+<body {{ body_class() }}>
 
-<main class="yivic-site__main">
-    <div class="yivic-site__container">
-        @yield('content')
-    </div>
+@include('partials.header')
+
+<main id="content" class="site-content">
+    @yield('content')
 </main>
 
-<footer class="yivic-site__footer">
-    <div class="yivic-site__container">
-        © {{ date('Y') }} Yivic CodeMall
-    </div>
-</footer>
+@include('partials.footer')
+
+@wp_footer
 </body>
 </html>
