@@ -5,6 +5,9 @@ declare( strict_types = 1 );
 namespace Yivic\YivicLiteChild\Theme\WP;
 
 use Yivic\YivicLiteChild\App\Support\Traits\YivicLiteChildTransTrait;
+use Yivic\YivicLiteChild\Theme\Concerns\HasThemeIdentity;
+use Yivic\YivicLiteChild\Theme\Concerns\HasChildThemeRoots;
+use Yivic\YivicLiteChild\Theme\Concerns\HasParentThemeRoots;
 use Yivic\YivicLite\Theme\WP\YivicLite_WP_Theme;
 
 /**
@@ -27,6 +30,9 @@ use Yivic\YivicLite\Theme\WP\YivicLite_WP_Theme;
  */
 final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
     use YivicLiteChildTransTrait;
+    use HasThemeIdentity;
+    use HasParentThemeRoots;
+    use HasChildThemeRoots;
 
     /**
      * @param array $config Runtime configuration for the child theme.
@@ -34,6 +40,10 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
      */
     public function __construct( array $config = [] ) {
         parent::__construct( $config );
+
+        // Hydrate new capabilities introduced by the child kernel
+        $this->hydrateThemeIdentity( $config );
+        $this->hydrateParentRoots( $config );
     }
 
     /**
@@ -98,12 +108,29 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
      * Runs after the parent theme has completed setup.
      */
     public function setup_theme(): void {
-        $domain = $this->getTextDomain();
-
         \load_child_theme_textdomain(
-            $domain,
-            $this->basePath . '/languages'
+            $this->getTextDomain(),
+            $this->child_path( 'languages' )
         );
+
+        /**
+         * Enable support for site logo (child overrides via filter).
+         */
+        $filter = $this->get_theme_slug() . '/custom_logo_args';
+
+        add_theme_support(
+            'custom-logo',
+            apply_filters( $filter, [
+                'height'      => 110,
+                'width'       => 470,
+                'flex-width'  => true,
+                'flex-height' => true,
+            ] )
+        );
+
+        // Allow ordering via `menu_order` where needed.
+        add_post_type_support( 'page', 'page-attributes' );
+        add_post_type_support( 'post', 'page-attributes' );
     }
 
     /**
