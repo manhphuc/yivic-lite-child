@@ -142,7 +142,52 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
      * - Avoid inline logic here (delegate to helpers if needed)
      */
     public function enqueue_scripts(): void {
-        // Intentionally left empty.
-        // Enqueue child theme assets here when needed.
+        $slug    = $this->get_theme_slug();
+        $env     = (string) ( $this->config['env'] ?? 'production' );
+        $debug   = (bool) ( $this->config['debug'] ?? false );
+        $isLocal = ( $env === 'local' );
+
+        // Cache-busting for local/debug builds; stable version for production.
+        $version = ( $isLocal || $debug ) ? (string) time() : (string) $this->get_version();
+
+        // Handles (namespaced, readable)
+        $styleHandle = "{$slug}-main-style";
+        $mainHandle  = "{$slug}-main-script";
+        $appHandle   = "{$slug}-app-script";
+
+        // Styles
+        wp_enqueue_style(
+            $styleHandle,
+            $this->child_url( 'public-assets/dist/css/main.css' ),
+            [],
+            $version
+        );
+
+        // Scripts
+        wp_enqueue_script(
+            $mainHandle,
+            $this->child_url( 'public-assets/dist/js/main.js' ),
+            [],
+            $version,
+            true
+        );
+
+        wp_enqueue_script(
+            $appHandle,
+            $this->child_url( 'public-assets/dist/js/app.js' ),
+            [$mainHandle], // app can depend on main (safe default)
+            $version,
+            true
+        );
+
+        // Localize to an existing handle (attach runtime data to app script).
+        wp_localize_script(
+            $appHandle,
+            'wpAjax',
+            [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+            ]
+        );
     }
+
 }
