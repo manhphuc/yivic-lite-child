@@ -8,6 +8,7 @@ phpcs.cache
 wp-cli.local.yml
 
 ### PHP & Composer
+composer.lock
 /vendor/
 composer.phar
 
