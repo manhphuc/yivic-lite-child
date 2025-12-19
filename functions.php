@@ -84,25 +84,50 @@ if ( is_readable( $composerAutoload ) ) {
 | 3. Bootstrap Child Kernel
 |--------------------------------------------------------------------------
 |
-| Architect-style bootloader:
-| - isolate scope (no globals leaking)
-| - strict guards (fail-fast)
-| - normalized config (runtime overrides win)
-| - consistent logging
+| We intentionally delay the child kernel bootstrap until `after_setup_theme`
+| to ensure the parent theme has completed loading its code (and any internal
+| includes/autoload it performs).
+|
+| Why this matters:
+| - Child theme `functions.php` can run before the parent theme's kernel class
+|   is available (especially when the parent theme does not expose PSR-4
+|   autoloading globally).
+| - Booting too early causes a false-negative guard (parent kernel "not loaded")
+|   and prevents the child from registering hooks (enqueue, setup, etc.).
+|
+| Design goals:
+| - Config-first bootstrap (runtime config is the single source of truth)
+| - Strict guards + fail-fast with debug-only logging
+| - No dependency on parent theme file paths (wp.org-safe)
+| - No globals leaking (closures only)
 |
 */
-(static function (): void {
+add_action( 'after_setup_theme', static function (): void {
 
     $debug = defined( 'WP_DEBUG' ) && WP_DEBUG;
 
+    /*
+     * Debug logger (no-op when WP_DEBUG is disabled).
+     *
+     * Levels:
+     * - INFO: successful milestones
+     * - WARN: recoverable issues (non-fatal)
+     * - FAIL: fatal bootstrap failure (kernel cannot run)
+     */
     $log = static function ( string $level, string $message ) use ( $debug ): void {
         if ( ! $debug ) {
             return;
         }
-        // Levels: INFO | WARN | FAIL | SKIP
         error_log( sprintf( '[Yivic Lite Child] %s: %s', $level, $message ) );
     };
 
+    /*
+     * Guard required classes.
+     *
+     * At `after_setup_theme`, the parent theme should already be loaded.
+     * If the parent kernel is still missing here, it is a real failure
+     * (misconfigured parent theme, missing files, or autoload not executed).
+     */
     $guardClass = static function ( string $class, string $onFailLevel, string $onFailMessage ) use ( $log ): bool {
         if ( class_exists( $class ) ) {
             return true;
@@ -111,6 +136,10 @@ if ( is_readable( $composerAutoload ) ) {
         return false;
     };
 
+    /*
+     * Load config from file. The config file MUST return an array.
+     * Any invalid config returns an empty array and logs a warning in debug mode.
+     */
     $loadConfig = static function ( string $file ) use ( $log ): array {
         if ( ! is_readable( $file ) ) {
             $log( 'WARN', 'Config file not readable: ' . $file );
@@ -127,18 +156,24 @@ if ( is_readable( $composerAutoload ) ) {
         return [];
     };
 
+    /*
+     * Normalize config: runtime overrides always win.
+     * Keep this minimal and deterministic (no side-effects).
+     */
     $normalizeConfig = static function ( array $config ): array {
-        // Runtime overrides (source of truth for critical meta)
-        return array_replace( $config, [
-            'themeFilename' => __FILE__,
-        ] );
+        return array_replace(
+            $config,
+            [
+                'themeFilename' => __FILE__,
+            ]
+        );
     };
 
     // ---------------------------------------------------------------------
     // 1) Guards
     // ---------------------------------------------------------------------
     $parentKernel = \Yivic\YivicLite\Theme\WP\YivicLite_WP_Theme::class;
-    if ( ! $guardClass( $parentKernel, 'SKIP', 'Parent kernel not loaded' ) ) {
+    if ( ! $guardClass( $parentKernel, 'FAIL', 'Parent kernel not loaded' ) ) {
         return;
     }
 
@@ -153,7 +188,7 @@ if ( is_readable( $composerAutoload ) ) {
     $configFile = __DIR__ . '/wp-app-config/app.php';
     $config     = $normalizeConfig( $loadConfig( $configFile ) );
 
-    // Optional: if you require certain keys, validate here (architect habit)
+    // Optional: validate required config keys here if you want strict mode.
     // Example:
     // if ( empty( $config['basePath'] ) || empty( $config['baseUrl'] ) ) {
     //     $log( 'FAIL', 'Invalid runtime config (basePath/baseUrl).' );
@@ -161,7 +196,7 @@ if ( is_readable( $composerAutoload ) ) {
     // }
 
     // ---------------------------------------------------------------------
-    // 3) Boot kernel (dedicated instance, no singleton collision)
+    // 3) Boot child kernel (dedicated instance, no singleton collision)
     // ---------------------------------------------------------------------
     try {
         ( new $childKernel( $config ) )->initTheme();
@@ -170,4 +205,5 @@ if ( is_readable( $composerAutoload ) ) {
         $log( 'FAIL', 'Boot exception: ' . $e->getMessage() );
     }
 
-})();
+}, 20 );
+
