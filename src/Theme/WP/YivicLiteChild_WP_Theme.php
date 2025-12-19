@@ -74,7 +74,10 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
         parent::initTheme();
 
         add_action( 'after_setup_theme', [ $this, 'setup_theme' ] );
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], 20 );
+
+        // Admin assets (separate from frontend).
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ], 20 );
     }
 
     /**
@@ -172,17 +175,64 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
             true
         );
 
+        // Localize into an EXISTING handle.
+        wp_localize_script(
+            $mainHandle,
+            'wpAjax',
+            [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+            ]
+        );
+    }
+
+    /**
+     * Enqueue styles and scripts for the WordPress admin area.
+     *
+     * This method is intentionally separated from front-end asset loading
+     * to ensure a clean boundary between:
+     * - public-facing assets (handled by enqueue_scripts)
+     * - admin-only assets (handled here)
+     *
+     * Design notes:
+     * - Uses the child theme root to avoid leaking parent theme assets.
+     * - Applies environment-aware versioning to support cache-busting
+     *   in local/debug environments while keeping stable versions in production.
+     * - Registers only assets that are guaranteed to exist in the build output
+     *   (e.g. admin.css, admin.js).
+     *
+     * This hook runs on `admin_enqueue_scripts` and should remain lightweight.
+     * Heavy logic or conditional admin behavior should be delegated to
+     * dedicated admin services or modules.
+     */
+    public function enqueue_admin_scripts(): void {
+        $slug    = $this->get_theme_slug();
+        $env     = (string) ( $this->config['env'] ?? 'production' );
+        $debug   = (bool) ( $this->config['debug'] ?? false );
+        $isLocal = ( $env === 'local' );
+
+        $version = ( $isLocal || $debug ) ? (string) time() : (string) $this->get_version();
+
+        $adminStyleHandle = "{$slug}-admin-style";
+        $adminScriptHandle = "{$slug}-admin-script";
+
+        wp_enqueue_style(
+            $adminStyleHandle,
+            $this->child_url( 'public-assets/dist/css/admin.css' ),
+            [],
+            $version
+        );
+
         wp_enqueue_script(
-            $appHandle,
-            $this->child_url( 'public-assets/dist/js/app.js' ),
-            [$mainHandle], // app can depend on main (safe default)
+            $adminScriptHandle,
+            $this->child_url( 'public-assets/dist/js/admin.js' ),
+            [],
             $version,
             true
         );
 
-        // Localize to an existing handle (attach runtime data to app script).
+        // Optional: if admin.js needs ajax_url
         wp_localize_script(
-            $appHandle,
+            $adminScriptHandle,
             'wpAjax',
             [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
