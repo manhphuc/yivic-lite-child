@@ -65,14 +65,25 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
     /**
      * Register WordPress hooks used by the child theme.
      *
-     * This method is called by the parent kernel.
-     * Keep it declarative:
-     * - only attach hooks
-     * - do NOT execute heavy logic here
+     * IMPORTANT:
+     * - The parent theme registers its own hooks during its bootstrap.
+     * - This method MUST NOT call parent::initTheme(), otherwise parent
+     *   hooks would be registered twice, causing UI bugs (e.g. duplicated
+     *   menu dropdown arrows).
+     *
+     * Responsibility:
+     * - Attach child-specific hooks only.
+     * - Keep this method declarative (no heavy logic).
+     *
+     * Boot flow:
+     * - The child kernel is instantiated and booted explicitly from
+     *   the child theme's functions.php (after_setup_theme).
+     *
+     * Note:
+     * - parent::__construct() is still called to initialize parent kernel state,
+     *   but we intentionally avoid re-registering parent hooks here.
      */
     public function initTheme(): void {
-        parent::initTheme();
-
         add_action( 'after_setup_theme', [ $this, 'setup_theme' ] );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], 20 );
 

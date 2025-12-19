@@ -104,6 +104,14 @@ if ( is_readable( $composerAutoload ) ) {
 */
 add_action( 'after_setup_theme', static function (): void {
 
+    // One-shot guard: ensures the child kernel is booted only once per request.
+    // This prevents duplicated hook registration in edge cases.
+    static $booted = false;
+    if ( $booted ) {
+        return;
+    }
+    $booted = true;
+
     $debug = defined( 'WP_DEBUG' ) && WP_DEBUG;
 
     /*
