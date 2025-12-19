@@ -5,7 +5,7 @@ declare( strict_types = 1 );
 $textDomain = 'yivic-lite-child';
 
 return [
-    'version'           => YIVIC_LITE_CHILD_VERSION,
+    'version' => YIVIC_LITE_CHILD_VERSION,
 
     // ------------------------------------------------------------------
     // Child theme root (stylesheet directory)
@@ -18,8 +18,8 @@ return [
     // These values are intentionally overridden here so the child theme
     // can fully control asset loading, view resolution, and translations
     // without relying on WordPress globals elsewhere in the codebase.
-    'basePath'          => get_stylesheet_directory(),
-    'baseUrl'           => get_stylesheet_directory_uri(),
+    'basePath' => get_stylesheet_directory(),
+    'baseUrl'  => get_stylesheet_directory_uri(),
 
     // ------------------------------------------------------------------
     // Parent theme root (template directory)
@@ -33,25 +33,54 @@ return [
     //
     // This is especially important for Laravel-style architectures where
     // resolution logic (views/assets) should depend on config, not globals.
-    'parentBasePath'    => get_template_directory(),
-    'parentBaseUrl'     => get_template_directory_uri(),
+    'parentBasePath' => get_template_directory(),
+    'parentBaseUrl'  => get_template_directory_uri(),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Theme Runtime Environment
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the runtime environment the theme is currently
+    | operating in. It may be used to control how theme-level features
+    | and services are configured (e.g. asset loading strategies).
+    |
+    | Typical values include: local | staging | production.
+    |
+    */
+    'env' => defined( 'WP_ENV' ) ? WP_ENV : 'production',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Theme Debug Mode
+    |--------------------------------------------------------------------------
+    |
+    | When debug mode is enabled, the theme may expose additional debug
+    | information or enable development-only features.
+    |
+    | This flag is intentionally centralized here to avoid scattering
+    | direct checks against WordPress constants (e.g. WP_DEBUG) throughout
+    | the codebase.
+    |
+    */
+    'debug' => defined( 'WP_DEBUG' ) && (bool)WP_DEBUG,
 
     // ------------------------------------------------------------------
     // Internationalization (i18n)
     // ------------------------------------------------------------------
-    'textDomain'        => $textDomain,
+    'textDomain' => $textDomain,
 
     // ------------------------------------------------------------------
     // Theme identity
     // ------------------------------------------------------------------
     // Logical identifier for the child theme.
     // Used internally for namespacing, debugging, and instance resolution.
-    'themeSlug'         => 'yivic-lite-child',
+    'themeSlug' => 'yivic-lite-child',
 
     // ------------------------------------------------------------------
     // Extension point
     // ------------------------------------------------------------------
     // Reserved for future service providers or runtime bindings.
     // Keep empty by default to avoid unnecessary boot overhead.
-    'services'          => [],
+    'services' => [],
 ];
