@@ -213,5 +213,5 @@ add_action( 'after_setup_theme', static function (): void {
         $log( 'FAIL', 'Boot exception: ' . $e->getMessage() );
     }
 
-}, 20 );
+}, 0 );
 
