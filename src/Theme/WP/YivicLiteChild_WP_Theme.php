@@ -42,34 +42,36 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
     public function __construct( array $config = [] ) {
         parent::__construct( $config );
 
-        // Hydrate new capabilities introduced by the child kernel
+        // Hydrate child-added capabilities.
         $this->hydrateThemeIdentity( $config );
         $this->hydrateParentRoots( $config );
 
         // ------------------------------------------------------------------
         // Bootstrap Theme Application (DI + Providers)
         // ------------------------------------------------------------------
-        // Expose globally for Laravel-like helpers: app(), view(), ...
+        // Expose globally for theme-scoped helpers: app(), theme_view(), ...
         //
-        // Important:
+        // Policy:
         // - Boot once per request.
-        // - Keep this lightweight: the heavy bindings are inside providers.
-        //
-        // This will become the foundation for:
-        // - DatabaseServiceProvider
-        // - CacheServiceProvider
-        // - ConsoleKernel (CLI commands)
-        // - HttpKernel (routing/middleware)
+        // - Runtime config overrides must be passed into Application.
+        // - Do NOT overwrite an existing valid app instance.
         // ------------------------------------------------------------------
         $basePath = $this->child_path();
-        if ( $basePath === '' && function_exists('get_stylesheet_directory' ) ) {
-            $basePath = (string) get_stylesheet_directory();
+
+        if ( $basePath === '' && \function_exists( 'get_stylesheet_directory' ) ) {
+            $basePath = (string) \get_stylesheet_directory();
         }
 
-        $application = new ThemeApplication( $basePath );
+        // Application basePath is required; fail fast with a clear exception.
+        $application = new ThemeApplication( $basePath, $config );
         $application->bootstrap();
-        $GLOBALS['yivic_theme_app'] = $application;
 
+        if (
+            ! isset( $GLOBALS[ 'yivic_theme_app' ] ) ||
+            ! $GLOBALS[ 'yivic_theme_app' ] instanceof ThemeApplication
+        ) {
+            $GLOBALS[ 'yivic_theme_app' ] = $application;
+        }
     }
 
     /**
@@ -192,9 +194,8 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
         $version = ( $isLocal || $debug ) ? (string) time() : (string) $this->get_version();
 
         // Handles (namespaced, readable)
-        $styleHandle = "{$slug}-main-style";
-        $mainHandle  = "{$slug}-main-script";
-        $appHandle   = "{$slug}-app-script";
+        $styleHandle = $slug . '-main-style';
+        $mainHandle  = $slug . '-main-script';
 
         // Styles
         wp_enqueue_style(
@@ -244,14 +245,10 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
      */
     public function enqueue_admin_scripts(): void {
         $slug    = $this->get_theme_slug();
-        $env     = (string) ( $this->config['env'] ?? 'production' );
-        $debug   = (bool) ( $this->config['debug'] ?? false );
-        $isLocal = ( $env === 'local' );
+        $version = $this->resolveAssetVersion();
 
-        $version = ( $isLocal || $debug ) ? (string) time() : (string) $this->get_version();
-
-        $adminStyleHandle = "{$slug}-admin-style";
-        $adminScriptHandle = "{$slug}-admin-script";
+        $adminStyleHandle  = $slug . '-admin-style';
+        $adminScriptHandle = $slug . '-admin-script';
 
         wp_enqueue_style(
             $adminStyleHandle,
@@ -276,6 +273,39 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
             ]
         );
+    }
+
+    /**
+     * Resolve asset version for cache-busting.
+     *
+     * Purpose:
+     * - Provide a single, centralized strategy for asset versioning.
+     * - Prevent stale assets during development and debugging.
+     * - Ensure stable, cache-friendly versions in production.
+     *
+     * Strategy:
+     * - Local or debug environment:
+     *   → Use the current timestamp (time()) to force cache-busting
+     *     on every request.
+     * - Production (non-debug):
+     *   → Use the theme version to allow long-term browser caching.
+     *
+     * Design notes:
+     * - WordPress accepts both int|string for the `$ver` parameter in
+     *   wp_enqueue_style() / wp_enqueue_script().
+     * - This method intentionally avoids filesystem or manifest access
+     *   to remain fast and deterministic.
+     * - Environment flags are read from runtime config to avoid
+     *   scattering direct WP_ENV / WP_DEBUG checks across the codebase.
+     *
+     * @return int|string Asset version suitable for WordPress enqueue APIs.
+     */
+    private function resolveAssetVersion(): int|string {
+        $env     = (string) ( $this->config['env'] ?? 'production' );
+        $debug   = (bool) ( $this->config['debug'] ?? false );
+        $isLocal = ( $env === 'local' );
+
+        return ( $isLocal || $debug ) ? (string) time() : (string) $this->get_version();
     }
 
 }

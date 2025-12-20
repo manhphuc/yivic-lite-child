@@ -18,4 +18,3 @@ defined('ABSPATH') || exit;
 
 <div class="yivic-lite-page__wrap">
     <?php echo theme_view( 'partials.header' ); ?>
-

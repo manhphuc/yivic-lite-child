@@ -1,5 +1,5 @@
 <?php
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace Yivic\YivicLiteChild\Foundation;
 
@@ -22,8 +22,7 @@ use RuntimeException;
  * - Config-driven (testable, predictable).
  * - PHP-version friendly: avoid readonly/property-promotion features that require PHP 8.1+.
  */
-final class Application
-{
+final class Application {
     /**
      * Child theme absolute base path (stylesheet directory).
      *
@@ -78,12 +77,11 @@ final class Application
      * @param string $basePath         Child theme absolute path (stylesheet directory).
      * @param array  $runtimeOverrides Optional runtime overrides (highest priority).
      */
-    public function __construct(string $basePath, array $runtimeOverrides = [])
-    {
-        $basePath = rtrim($basePath, '/');
+    public function __construct( string $basePath, array $runtimeOverrides = [] ) {
+        $basePath = rtrim( $basePath, '/' );
 
-        if ($basePath === '') {
-            throw new RuntimeException('Application basePath cannot be empty.');
+        if ( $basePath === '' ) {
+            throw new RuntimeException( 'Application basePath cannot be empty.' );
         }
 
         $this->basePath         = $basePath;
@@ -93,15 +91,15 @@ final class Application
 
         // Bind core references early (Laravel convention).
         // This makes the app/container/config resolvable during bootstrap.
-        $this->container->instance('app', $this);
-        $this->container->instance(self::class, $this);
-        $this->container->instance(Container::class, $this->container);
+        $this->container->instance( 'app', $this );
+        $this->container->instance( self::class, $this );
+        $this->container->instance( Container::class, $this->container );
 
         // Config is loaded during bootstrap (LoadConfiguration), but we bind
         // an empty repository now to guarantee the binding exists.
         $this->config = new ConfigRepository([]);
-        $this->container->instance('config', $this->config);
-        $this->container->instance(ConfigRepository::class, $this->config);
+        $this->container->instance( 'config', $this->config );
+        $this->container->instance( ConfigRepository::class, $this->config );
     }
 
     /**
@@ -112,33 +110,30 @@ final class Application
      * - providers registered
      * - providers booted
      */
-    public function bootstrap(): void
-    {
-        foreach ($this->bootstrappers as $bootstrapperClass) {
+    public function bootstrap(): void {
+        foreach ( $this->bootstrappers as $bootstrapperClass ) {
             $bootstrapper = new $bootstrapperClass();
 
             // Keep bootstrapper contract flexible: only require a bootstrap() method.
-            if (!method_exists($bootstrapper, 'bootstrap')) {
+            if ( ! method_exists( $bootstrapper, 'bootstrap' ) ) {
                 continue;
             }
 
-            $bootstrapper->bootstrap($this);
+            $bootstrapper->bootstrap( $this );
         }
     }
 
     /**
      * Get the container.
      */
-    public function container(): Container
-    {
+    public function container(): Container {
         return $this->container;
     }
 
     /**
      * Get the configuration repository.
      */
-    public function config(): ConfigRepository
-    {
+    public function config(): ConfigRepository {
         return $this->config;
     }
 
@@ -147,11 +142,10 @@ final class Application
      *
      * @param string $path Relative path inside theme root.
      */
-    public function basePath(string $path = ''): string
-    {
-        $path = ltrim($path, '/');
+    public function basePath( string $path = '' ): string {
+        $path = ltrim( $path, '/' );
 
-        if ($path === '') {
+        if ( $path === '' ) {
             return $this->basePath;
         }
 
@@ -163,13 +157,12 @@ final class Application
      *
      * @param class-string<\Yivic\YivicLiteChild\Foundation\Providers\ServiceProvider> $providerClass
      */
-    public function registerProvider(string $providerClass): void
-    {
-        if (isset($this->providers[$providerClass])) {
+    public function registerProvider( string $providerClass ): void {
+        if ( isset( $this->providers[$providerClass] ) ) {
             return;
         }
 
-        $provider = new $providerClass($this);
+        $provider = new $providerClass( $this );
         $provider->register();
 
         $this->providers[$providerClass] = $provider;
@@ -178,9 +171,8 @@ final class Application
     /**
      * Boot all registered providers.
      */
-    public function bootProviders(): void
-    {
-        foreach ($this->providers as $provider) {
+    public function bootProviders(): void {
+        foreach ( $this->providers as $provider ) {
             $provider->boot();
         }
     }
@@ -190,8 +182,7 @@ final class Application
      *
      * @return array<string, mixed>
      */
-    public function runtimeOverrides(): array
-    {
+    public function runtimeOverrides(): array {
         return $this->runtimeOverrides;
     }
 }

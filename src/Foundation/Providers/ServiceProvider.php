@@ -1,5 +1,5 @@
 <?php
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace Yivic\YivicLiteChild\Foundation\Providers;
 
@@ -16,41 +16,36 @@ use Illuminate\Config\Repository as ConfigRepository;
  *
  * Keep providers small and focused: one concern per provider.
  */
-abstract class ServiceProvider
-{
-    public function __construct(protected Application $app)
-    {
+abstract class ServiceProvider {
+    public function __construct( protected Application $app ) {
+
     }
 
     /**
      * Register bindings in the container.
      */
-    public function register(): void
-    {
+    public function register(): void {
         // intentionally empty
     }
 
     /**
      * Boot logic after all providers registered.
      */
-    public function boot(): void
-    {
+    public function boot(): void {
         // intentionally empty
     }
 
     /**
      * Convenience: access container.
      */
-    protected function container(): Container
-    {
+    protected function container(): Container {
         return $this->app->container();
     }
 
     /**
      * Convenience: access config repository.
      */
-    protected function config(): ConfigRepository
-    {
+    protected function config(): ConfigRepository {
         return $this->app->config();
     }
 }
