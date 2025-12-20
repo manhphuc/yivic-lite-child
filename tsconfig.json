@@ -1,16 +1,34 @@
 {
   "compilerOptions": {
+    /**
+     * Generate source maps for TypeScript.
+     * Useful in development; Webpack will decide whether to emit them
+     * based on mode + devtool settings.
+     */
     "sourceMap": true,
+
+    /**
+     * ES target.
+     * Note: Webpack output target is also controlled in webpack-base.config.js.
+     */
     "target": "es2019",
+
+    /**
+     * Enforce strong typing discipline.
+     */
     "noImplicitAny": true,
     "alwaysStrict": true,
+
+    /**
+     * Resolve modules like Node.js does (node_modules).
+     */
     "moduleResolution": "node",
+
+    /**
+     * Allows default import syntax for CommonJS modules when needed.
+     */
     "allowSyntheticDefaultImports": true
   },
-  "include": [
-    "./public-assets/src/**/*",
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "include": ["./public-assets/src/**/*"],
+  "exclude": ["node_modules"]
 }

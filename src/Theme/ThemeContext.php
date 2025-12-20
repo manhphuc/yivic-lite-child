@@ -222,25 +222,58 @@ final class ThemeContext {
     /**
      * Resolve versioned assets via a manifest mapping (optional).
      *
-     * If manifest doesn't exist or mapping not found => falls back to asset().
+     * Contract:
+     * - $relative is a path relative to the build root (dist), e.g. "css/main.css", "js/main.js".
+     * - Manifest maps "css/main.css" => "css/main.abc123.css" (or similar).
+     *
+     * Behavior:
+     * - If manifest missing / invalid / no mapping => fallback to dist asset (non-hashed).
+     * - Always serves from the build root: {theme}/public-assets/dist/...
+     * - Never throws in templates.
      */
-    public function mix( string $relative, string $manifestRelative = 'public-assets/dist/manifest.json' ): string {
-        $relative = $this->sanitizeRelative( $relative );
-        if ( $relative === '' ) {
+    public function mix(string $relative, string $manifestRelative = ''): string
+    {
+        $relative = $this->sanitizeRelative($relative);
+        if ($relative === '') {
             return $this->childBaseUrl;
         }
 
-        $manifest = $this->loadAssetManifest( $manifestRelative );
-        if ( $manifest === null ) {
-            return $this->asset( $relative );
+        $distRoot = 'public-assets/dist';
+
+        // If caller didn't specify manifest path, try common locations (child-first/parent-fallback handled inside loadAssetManifest()).
+        $manifestCandidates = $manifestRelative !== ''
+            ? [$manifestRelative]
+            : [
+                'public-assets/dist/manifest/manifest.json',
+                'public-assets/dist/manifest.json',
+            ];
+
+        $manifest = null;
+        foreach ($manifestCandidates as $candidate) {
+            $manifest = $this->loadAssetManifest($candidate);
+            if ($manifest !== null && $manifest !== []) {
+                break;
+            }
+        }
+
+        // Manifest missing/empty => fallback to non-hashed asset in dist.
+        if ($manifest === null || $manifest === []) {
+            return $this->asset($distRoot . '/' . $relative);
         }
 
         $mapped = $manifest[$relative] ?? null;
-        if ( !\is_string( $mapped ) || $mapped === '' ) {
-            return $this->asset( $relative );
+
+        // Mapping missing/invalid => fallback to non-hashed asset in dist.
+        if (!\is_string($mapped) || $mapped === '') {
+            return $this->asset($distRoot . '/' . $relative);
         }
 
-        return $this->asset( $mapped );
+        $mapped = $this->sanitizeRelative($mapped);
+        if ($mapped === '') {
+            return $this->asset($distRoot . '/' . $relative);
+        }
+
+        return $this->asset($distRoot . '/' . $mapped);
     }
 
     // ---------------------------------------------------------------------
