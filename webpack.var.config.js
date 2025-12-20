@@ -1,17 +1,22 @@
 /**
+ * webpack.var.config.js
+ *
  * Build-time variables for the Webpack pipeline.
  *
- * This file defines which files will be processed and where
- * output CSS/JS files should be written.
+ * Why this file exists:
+ * - Keeps entry/output paths out of the base config.
+ * - Makes it easy to adjust file locations without touching pipeline logic.
+ * - Helps keep webpack-base.config.js reusable and clean.
  *
- * Keeping paths here ensures all build logic remains configurable
- * without modifying the base Webpack config.
+ * Conventions:
+ * - Paths are relative to the theme root.
+ * - Output goes to: public-assets/dist/
+ * - Source files live in: public-assets/src/
  */
 
 const basePath = '.';
 
 const webpackParams = {
-    /** Entry points for JavaScript + SCSS build */
     entryPath: {
         main: [
             basePath + '/public-assets/src/scss/main.scss',
@@ -23,7 +28,7 @@ const webpackParams = {
         ],
     },
 
-    /** Output file locations (relative to the theme root) */
+    // dev default (no hash)
     jsOutputPath: basePath + '/public-assets/dist/js/[name].js',
     cssOutputPath: basePath + '/public-assets/dist/css/[name].css',
 };

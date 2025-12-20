@@ -4,12 +4,13 @@ declare( strict_types = 1 );
 
 namespace Yivic\YivicLiteChild\Theme\WP;
 
-use Yivic\YivicLiteChild\Foundation\Application as ThemeApplication;
 use Yivic\YivicLiteChild\App\Support\Traits\YivicLiteChildTransTrait;
 use Yivic\YivicLiteChild\Theme\Concerns\HasThemeIdentity;
 use Yivic\YivicLiteChild\Theme\Concerns\HasChildThemeRoots;
 use Yivic\YivicLiteChild\Theme\Concerns\HasParentThemeRoots;
 use Yivic\YivicLite\Theme\WP\YivicLite_WP_Theme;
+use Yivic\YivicLiteChild\Foundation\ThemeApp\ThemeAppRuntime;
+use Yivic\YivicLiteChild\Theme\ThemeContext;
 
 /**
  * Class YivicLiteChild_WP_Theme
@@ -34,6 +35,8 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
     use HasThemeIdentity;
     use HasParentThemeRoots;
     use HasChildThemeRoots;
+
+    private ?ThemeContext $theme = null;
 
     /**
      * @param array $config Runtime configuration for the child theme.
@@ -62,16 +65,8 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
             $basePath = (string) \get_stylesheet_directory();
         }
 
-        // Application basePath is required; fail fast with a clear exception.
-        $application = new ThemeApplication( $basePath, $config );
-        $application->bootstrap();
-
-        if (
-            ! isset( $GLOBALS[ 'yivic_theme_app' ] ) ||
-            ! $GLOBALS[ 'yivic_theme_app' ] instanceof ThemeApplication
-        ) {
-            $GLOBALS[ 'yivic_theme_app' ] = $application;
-        }
+        // Bootstrap once per request (fail-fast).
+        ThemeAppRuntime::resolve( $basePath, $config );
     }
 
     /**
@@ -177,101 +172,66 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
     }
 
     /**
-     * Enqueue styles and scripts for the front-end.
+     * Enqueue front-end assets for the child theme.
      *
-     * Best practices:
-     * - Use wp_enqueue_style / wp_enqueue_script
-     * - Respect dependencies and versioning
-     * - Avoid inline logic here (delegate to helpers if needed)
+     * Responsibilities:
+     * - Define semantic WordPress handles for front-end assets.
+     * - Delegate all resolution logic (manifest, versioning, fallbacks)
+     *   to enqueueBundle().
+     *
+     * Design notes:
+     * - This method intentionally contains NO environment or filesystem logic.
+     * - Asset paths, cache strategy, and manifest usage are centralized
+     *   in enqueueBundle() to avoid duplication and drift.
+     *
+     * Bundle resolved:
+     * - CSS: css/main.css   (or hashed equivalent via manifest)
+     * - JS:  js/main.js    (or hashed equivalent via manifest)
+     *
+     * Hooked to:
+     * - wp_enqueue_scripts (priority defined by the caller)
+     *
+     * @return void
      */
     public function enqueue_scripts(): void {
-        $slug    = $this->get_theme_slug();
-        $env     = (string) ( $this->config['env'] ?? 'production' );
-        $debug   = (bool) ( $this->config['debug'] ?? false );
-        $isLocal = ( $env === 'local' );
+        $slug = $this->get_theme_slug();
 
-        // Cache-busting for local/debug builds; stable version for production.
-        $version = ( $isLocal || $debug ) ? (string) time() : (string) $this->get_version();
-
-        // Handles (namespaced, readable)
-        $styleHandle = $slug . '-main-style';
-        $mainHandle  = $slug . '-main-script';
-
-        // Styles
-        wp_enqueue_style(
-            $styleHandle,
-            $this->child_url( 'public-assets/dist/css/main.css' ),
-            [],
-            $version
-        );
-
-        // Scripts
-        wp_enqueue_script(
-            $mainHandle,
-            $this->child_url( 'public-assets/dist/js/main.js' ),
-            [],
-            $version,
-            true
-        );
-
-        // Localize into an EXISTING handle.
-        wp_localize_script(
-            $mainHandle,
-            'wpAjax',
-            [
-                'ajax_url' => admin_url( 'admin-ajax.php' ),
-            ]
+        $this->enqueueBundle(
+            'main',
+            $slug . '-main-style',
+            $slug . '-main-script'
         );
     }
 
+
     /**
-     * Enqueue styles and scripts for the WordPress admin area.
+     * Enqueue admin-only assets for the child theme.
      *
-     * This method is intentionally separated from front-end asset loading
-     * to ensure a clean boundary between:
-     * - public-facing assets (handled by enqueue_scripts)
-     * - admin-only assets (handled here)
+     * Responsibilities:
+     * - Load assets used exclusively within the WordPress admin area.
+     * - Ensure admin assets remain isolated from front-end bundles.
      *
      * Design notes:
-     * - Uses the child theme root to avoid leaking parent theme assets.
-     * - Applies environment-aware versioning to support cache-busting
-     *   in local/debug environments while keeping stable versions in production.
-     * - Registers only assets that are guaranteed to exist in the build output
-     *   (e.g. admin.css, admin.js).
+     * - Uses the same enqueueBundle() pipeline as front-end assets,
+     *   guaranteeing consistent behavior across environments.
+     * - Keeps admin asset loading explicit and predictable.
      *
-     * This hook runs on `admin_enqueue_scripts` and should remain lightweight.
-     * Heavy logic or conditional admin behavior should be delegated to
-     * dedicated admin services or modules.
+     * Bundle resolved:
+     * - CSS: css/admin.css   (or hashed equivalent via manifest)
+     * - JS:  js/admin.js    (or hashed equivalent via manifest)
+     *
+     * Hooked to:
+     * - admin_enqueue_scripts
+     *
+     * @return void
      */
     public function enqueue_admin_scripts(): void {
-        $slug    = $this->get_theme_slug();
-        $version = $this->resolveAssetVersion();
+        $slug = $this->get_theme_slug();
 
-        $adminStyleHandle  = $slug . '-admin-style';
-        $adminScriptHandle = $slug . '-admin-script';
-
-        wp_enqueue_style(
-            $adminStyleHandle,
-            $this->child_url( 'public-assets/dist/css/admin.css' ),
-            [],
-            $version
-        );
-
-        wp_enqueue_script(
-            $adminScriptHandle,
-            $this->child_url( 'public-assets/dist/js/admin.js' ),
-            [],
-            $version,
-            true
-        );
-
-        // Optional: if admin.js needs ajax_url
-        wp_localize_script(
-            $adminScriptHandle,
-            'wpAjax',
-            [
-                'ajax_url' => admin_url( 'admin-ajax.php' ),
-            ]
+        $this->enqueueBundle(
+            'admin',
+            $slug . '-admin-style',
+            $slug . '-admin-script'
         );
     }
 
@@ -306,6 +266,202 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
         $isLocal = ( $env === 'local' );
 
         return ( $isLocal || $debug ) ? (string) time() : (string) $this->get_version();
+    }
+
+    /**
+     * Resolve the ThemeContext instance from the application container.
+     *
+     * Design:
+     * - Lazy-loaded to avoid unnecessary container access.
+     * - Cached per request to ensure O(1) access after first resolution.
+     *
+     * Failure strategy:
+     * - Fail-fast: if the container cannot resolve ThemeContext,
+     *   an exception is allowed to bubble up.
+     * - This indicates a misconfigured or broken application state
+     *   that should not be silently ignored.
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
+    private function themeContext(): ThemeContext {
+        if ($this->theme === null) {
+            $this->theme = ThemeAppRuntime::app()
+                ->container()
+                ->make(ThemeContext::class);
+        }
+
+        return $this->theme;
+    }
+
+    /**
+     * Enqueue a logical asset bundle (CSS + JS) using a unified, environment-aware strategy.
+     *
+     * This method centralizes all asset enqueue logic to:
+     * - Eliminate duplication between front-end and admin asset loading.
+     * - Enforce a single, consistent cache/versioning policy.
+     * - Support Laravel-style hashed assets via a Webpack manifest in production.
+     *
+     * ------------------------------------------------------------------
+     * Asset resolution strategy
+     * ------------------------------------------------------------------
+     *
+     * 1) Production environment (env=production, debug=false)
+     *    - Attempt to resolve assets via the Webpack manifest
+     *      using ThemeContext::mix().
+     *    - Filenames are content-hashed (e.g. main.abc123.css),
+     *      so NO query-string version is appended.
+     *    - If manifest resolution fails for any reason, the method
+     *      gracefully falls back to deterministic /dist assets.
+     *
+     * 2) Development or debug mode
+     *    - Always load non-hashed assets directly from:
+     *      /public-assets/dist/{css,js}/{scope}.*
+     *    - Append a dynamic version (timestamp) to force cache-busting
+     *      on every request.
+     *
+     * This guarantees:
+     * - Zero filesystem I/O during normal runtime.
+     * - Predictable URLs during development.
+     * - Maximum browser cache efficiency in production.
+     * - No fatal errors or white screens if the manifest is missing or broken.
+     *
+     * ------------------------------------------------------------------
+     * Security & stability notes
+     * ------------------------------------------------------------------
+     * - Container access (ThemeContext) is deferred and isolated.
+     * - All exceptions during manifest resolution are caught and logged.
+     * - The site will always continue to function using fallback assets.
+     *
+     * ------------------------------------------------------------------
+     * Parameters
+     * ------------------------------------------------------------------
+     *
+     * @param string $scope
+     *   Logical bundle name without extension.
+     *   Examples:
+     *   - "main"  → css/main.css + js/main.js
+     *   - "admin" → css/admin.css + js/admin.js
+     *
+     * @param string $styleHandle
+     *   Unique WordPress handle for the stylesheet.
+     *
+     * @param string $scriptHandle
+     *   Unique WordPress handle for the script.
+     *
+     * @return void
+     */
+    private function enqueueBundle(
+        string $scope,
+        string $styleHandle,
+        string $scriptHandle
+    ): void {
+
+        /**
+         * Resolve runtime environment flags.
+         *
+         * - env   : Controls production vs development behavior
+         * - debug : Explicitly disables optimizations when enabled
+         */
+        $env   = (string) ( $this->config['env'] ?? 'production' );
+        $debug = (bool)   ( $this->config['debug'] ?? false );
+
+        /**
+         * Decide whether to use the Webpack manifest.
+         *
+         * Manifest-based (hashed) assets are only used when:
+         * - Running in production
+         * - Debug mode is disabled
+         */
+        $useManifest = ( $env === 'production' ) && ! $debug;
+
+        /**
+         * Asset versioning strategy:
+         *
+         * - Manifest assets already include a content hash
+         *   → DO NOT append a query-string version.
+         *
+         * - Non-manifest assets (dev/debug)
+         *   → Append a dynamic version to force cache-busting.
+         */
+        $version = $useManifest ? null : $this->resolveAssetVersion();
+
+        /**
+         * Default fallback URLs (deterministic, no container required).
+         *
+         * These are always valid and ensure the site continues to work
+         * even if manifest resolution fails.
+         */
+        $css = $this->child_url( "public-assets/dist/css/{$scope}.css" );
+        $js  = $this->child_url( "public-assets/dist/js/{$scope}.js" );
+
+        /**
+         * Production path: attempt to resolve hashed assets via manifest.
+         *
+         * Any failure here MUST NOT break the request.
+         * We catch all throwables and fall back to the deterministic paths.
+         */
+        if ( $useManifest ) {
+            try {
+                $theme = $this->themeContext();
+
+                $css = $theme->mix( "css/{$scope}.css" );
+                $js  = $theme->mix( "js/{$scope}.js" );
+
+            } catch ( \Throwable $e ) {
+
+                /**
+                 * Defensive logging only.
+                 * Do not expose errors to users or interrupt rendering.
+                 */
+                if ( \function_exists( 'error_log' ) ) {
+                    error_log(
+                        '[yivic-lite-child] Asset manifest fallback: ' . $e->getMessage()
+                    );
+                }
+
+                // Fallback URLs are already assigned above.
+            }
+        }
+
+        /**
+         * Enqueue stylesheet.
+         *
+         * Dependencies are intentionally left empty to keep this
+         * method generic and reusable.
+         */
+        wp_enqueue_style(
+            $styleHandle,
+            $css,
+            [],
+            $version
+        );
+
+        /**
+         * Enqueue script.
+         *
+         * - Loaded in the footer for better performance.
+         */
+        wp_enqueue_script(
+            $scriptHandle,
+            $js,
+            [],
+            $version,
+            true
+        );
+
+        /**
+         * Expose WordPress AJAX endpoint to JavaScript.
+         *
+         * Localized into an EXISTING script handle to avoid
+         * accidental script duplication.
+         */
+        wp_localize_script(
+            $scriptHandle,
+            'wpAjax',
+            [
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+            ]
+        );
     }
 
 }

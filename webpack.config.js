@@ -1,8 +1,16 @@
 /**
- * Main Webpack configuration loader.
+ * webpack.config.js
  *
- * Delegates all logic to the base configuration and passes down
- * the selected build mode (development or production).
+ * Main Webpack configuration entrypoint.
+ *
+ * Responsibilities:
+ * - Detect the current build mode (development/production).
+ * - Delegate all pipeline logic to webpack-base.config.js.
+ * - Keep this file minimal and predictable.
+ *
+ * This is intentionally thin to ensure:
+ * - One place for pipeline logic (webpack-base.config.js)
+ * - One place for paths (webpack.var.config.js)
  */
 
 const baseConfig = require('./webpack-base.config');
