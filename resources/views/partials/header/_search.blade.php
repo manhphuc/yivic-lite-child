@@ -5,7 +5,7 @@
     <button
             class="yivic-lite-header__search-icon yivicSearch-icon yivicSearch"
             type="button"
-            aria-label="{{ esc_attr__('Search', 'yivic-lite') }}"
+            aria-label="{{ $theme->attr( $theme->__( 'Search' ) ) }}"
             aria-haspopup="dialog"
             aria-controls="yivic-lite-search-panel"
             aria-expanded="false"
@@ -21,7 +21,7 @@
     >
         @php
             // get_search_form echoes by default. Capture it.
-            $searchForm = get_search_form(false);
+            $searchForm = get_search_form( false );
         @endphp
 
         {!! $searchForm !!}

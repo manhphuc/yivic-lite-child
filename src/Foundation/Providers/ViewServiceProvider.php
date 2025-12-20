@@ -1,8 +1,11 @@
 <?php
-declare(strict_types=1);
+
+declare( strict_types = 1 );
 
 namespace Yivic\YivicLiteChild\Foundation\Providers;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\View\Factory as ViewFactoryContract;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\View\Compilers\BladeCompiler;
@@ -11,188 +14,130 @@ use Illuminate\View\Engines\EngineResolver;
 use Illuminate\View\Engines\FileEngine;
 use Illuminate\View\Factory as ViewFactory;
 use Illuminate\View\FileViewFinder;
+use RuntimeException;
+use Yivic\YivicLiteChild\Theme\ThemeContext;
+use Yivic\YivicLiteChild\Theme\ThemeContextFactory;
 
 /**
  * ViewServiceProvider (Illuminate\View / Blade).
  *
  * Responsibilities:
- * - Register view-related services into the theme container.
- * - Configure Blade compilation cache directory.
- * - Configure view discovery paths:
- *   - Child theme views first (override layer)
- *   - Parent theme views second (fallback layer)
+ * - Register view-related services into the theme container (Laravel-style).
+ * - Bind ThemeContext as the SINGLE source of truth for:
+ *   - view paths (child-first, parent fallback)
+ *   - compiled directory (and directory creation policy)
  *
- * Config keys:
- * - view.paths    : array<string>  Directories to search for views.
- * - view.compiled : string         Directory for compiled Blade templates.
+ * Design rules:
+ * - register(): bind services only (no heavy work).
+ * - boot(): share globals / post-registration configuration.
  *
- * Design goals:
- * - Lazy singletons for performance and override-friendliness.
- * - Theme-scoped bindings to avoid collisions with plugins.
- * - Deterministic view resolution (explicit extensions).
+ * Anti-duplication policy:
+ * - DO NOT normalize view paths or create compiled directories here.
+ * - Those concerns live in ThemeContextFactory + ThemeContext only.
  */
-final class ViewServiceProvider extends ServiceProvider
-{
-    /**
-     * Register bindings (no heavy work, no rendering).
-     *
-     * This method must be safe to call early in the bootstrap process.
-     * All expensive work is deferred via singleton closures.
-     */
-    public function register(): void
-    {
-        $app = $this->app;
+final class ViewServiceProvider extends ServiceProvider {
+    public function register(): void {
+        // Core dependencies (lazy, override-friendly).
+        $this->container()->singleton( Filesystem::class, static fn (): Filesystem => new Filesystem() );
+        $this->container()->singleton( Dispatcher::class, fn (): Dispatcher => new Dispatcher( $this->app->container() ) );
 
-        // Core dependencies (lazy + override-friendly).
-        $this->container()->singleton(Filesystem::class, fn () => new Filesystem());
-        $this->container()->singleton(Dispatcher::class, fn () => new Dispatcher($app->container()));
+        // Aliases (match container alias signature: alias($abstract, $alias)).
+        $this->container()->alias( Filesystem::class, 'files' );
+        $this->container()->alias( Dispatcher::class, 'events' );
 
-        /**
-         * IMPORTANT:
-         * Your container's alias() signature is: alias($abstract, $alias).
-         * Keep this direction consistent across the framework to avoid
-         * hard-to-debug binding issues.
-         */
-        $this->container()->alias(Filesystem::class, 'files');
-        $this->container()->alias(Dispatcher::class, 'events');
+        // ThemeContext: build once per request (single source of truth).
+        $this->container()->singleton(
+            ThemeContext::class,
+            fn (): ThemeContext => ( new ThemeContextFactory() )->make( $this->app )
+        );
+        $this->container()->alias( ThemeContext::class, 'theme' );
 
         // View factory (lazy).
-        $this->container()->singleton(ViewFactory::class, function () {
-            $files  = $this->container()->make(Filesystem::class);
-            $events = $this->container()->make(Dispatcher::class);
+        $this->container()->singleton( ViewFactory::class, function (): ViewFactory {
+            $files  = $this->container()->make( Filesystem::class );
+            $events = $this->container()->make( Dispatcher::class );
 
-            return $this->buildViewFactory($files, $events);
-        });
+            return $this->buildViewFactory( $files, $events );
+        } );
 
-        // Laravel-style string alias: resolve('view') -> ViewFactory
-        $this->container()->alias(ViewFactory::class, 'view');
+        // Laravel-like aliases.
+        $this->container()->alias( ViewFactory::class, 'view' );
 
-        // Future-proof: bind the contract as well.
+        // Bind the contract as well (future-proof).
         $this->container()->singleton(
-            \Illuminate\Contracts\View\Factory::class,
-            fn () => $this->container()->make(ViewFactory::class)
+            ViewFactoryContract::class,
+            fn (): ViewFactoryContract => $this->container()->make( ViewFactory::class )
         );
     }
 
-    /**
-     * Boot phase (post-register).
-     *
-     * Use this to configure the view factory after it is registered.
-     * Keep this lightweight and deterministic.
-     */
-    public function boot(): void
-    {
-        try {
-            /** @var ViewFactory $view */
-            $view = $this->container()->make('view');
-        } catch (\Illuminate\Contracts\Container\BindingResolutionException $e) {
-            // Hard fail with a clear message (do not silently degrade).
-            throw new \RuntimeException(
-                'Blade is not available: container cannot resolve [view]. ' .
-                'Make sure ViewServiceProvider::register() bound it before boot().',
-                0,
-                $e
-            );
-        }
+    public function boot(): void {
+        $view = $this->resolveViewFactory();
 
-        // Share commonly-used globals (optional).
-        $view->share('app', $this->app);
-        $view->share('config', $this->config()->all());
+        // Share commonly-used globals.
+        $view->share( 'app', $this->app );
+        $view->share( 'config', $this->config()->all() );
+
+        // Share ThemeContext across all views as $theme.
+        $view->share( 'theme', $this->resolveThemeContext() );
     }
 
     /**
-     * Build the Illuminate view factory.
-     *
-     * @param  Filesystem $files
-     * @param  Dispatcher $events
-     * @return ViewFactory
+     * Build the Illuminate ViewFactory using ThemeContext as the single source of truth.
      */
-    private function buildViewFactory(Filesystem $files, Dispatcher $events): ViewFactory
-    {
-        $paths    = (array) $this->config()->get('view.paths', []);
-        $compiled = (string) $this->config()->get('view.compiled', '');
+    private function buildViewFactory( Filesystem $files, Dispatcher $events ): ViewFactory {
+        $theme = $this->resolveThemeContext();
 
-        // Normalize and keep only existing directories.
-        $paths = $this->normalizePaths($paths);
-
-        // Sensible default if not provided.
-        if ($compiled === '') {
-            $compiled = $this->app->basePath('storage/framework/views');
-        }
-
-        $compiled = $this->normalizePath($compiled);
-
-        // Ensure Blade compiled directory exists.
-        // Blade requires this directory to be writable at runtime.
-        if ($compiled !== '' && !is_dir($compiled)) {
-
-            $created = mkdir($compiled, 0777, true);
-
-            if (!$created) {
-                $debug = (bool) $this->config()->get('debug', false);
-
-                if ($debug) {
-                    error_log(
-                        '[Yivic Lite Child] WARN: Failed to create Blade compiled directory: ' . $compiled
-                    );
-                }
-            }
-        }
+        // Ensure compiled directory exists (policy lives in ThemeContext).
+        $theme->ensureCompiledDirExists();
 
         $resolver = new EngineResolver();
 
         // Blade compiler.
-        $bladeCompiler = new BladeCompiler($files, $compiled);
+        $bladeCompiler = new BladeCompiler($files, $theme->compiledViewPath());
 
-        // Engines: blade + plain php.
-        $resolver->register('blade', static fn () => new CompilerEngine($bladeCompiler));
-        $resolver->register('php', static fn () => new FileEngine($files));
+        // Engines: blade + plain PHP.
+        $resolver->register( 'blade', static fn () => new CompilerEngine( $bladeCompiler ) );
+        $resolver->register( 'php', static fn () => new FileEngine( $files ) );
 
         /**
-         * Explicitly define view file extensions (deterministic behavior).
-         * - `test` => `test.blade.php` or `test.php`
+         * Deterministic view resolution:
+         * - "home" resolves to "home.blade.php" or "home.php"
+         * - Search order is defined by ThemeContext (child first, then parent).
          */
-        $finder = new FileViewFinder($files, $paths, ['blade.php', 'php']);
+        $finder = new FileViewFinder( $files, $theme->viewPaths(), [ 'blade.php', 'php' ] );
 
-        return new ViewFactory($resolver, $finder, $events);
+        return new ViewFactory( $resolver, $finder, $events );
     }
 
     /**
-     * Normalize view search paths and keep only real directories.
+     * Resolve the ViewFactory instance safely.
      *
-     * @param  array $paths
-     * @return array
+     * Why this method exists:
+     * - Keeps exception handling centralized and consistent.
+     * - Makes IDE/static analyzers happy (no unhandled BindingResolutionException).
+     * - Provides a single place to improve error reporting in the future.
+     *
+     * @throws RuntimeException When the view factory cannot be resolved.
      */
-    private function normalizePaths(array $paths): array
-    {
-        $out = [];
-
-        foreach ($paths as $p) {
-            $p = $this->normalizePath((string) $p);
-            if ($p !== '' && is_dir($p)) {
-                $out[] = $p;
-            }
+    private function resolveViewFactory(): ViewFactory {
+        try {
+            return $this->container()->make( ViewFactory::class );
+        } catch ( BindingResolutionException $e ) {
+            // Do not leak container internals or file paths; keep message high-level.
+            throw new RuntimeException( 'View system is not available: failed to resolve ViewFactory binding.', 0, $e );
         }
-
-        return $out;
     }
 
     /**
-     * Normalize filesystem paths.
+     * Resolve ThemeContext safely.
      *
-     * - Trim spaces
-     * - Convert backslashes to slashes for consistency
-     * - Remove trailing slashes
+     * @throws RuntimeException When ThemeContext cannot be resolved.
      */
-    private function normalizePath(string $path): string
-    {
-        $path = trim($path);
-        if ($path === '') {
-            return '';
+    private function resolveThemeContext(): ThemeContext {
+        try {
+            return $this->container()->make( ThemeContext::class );
+        } catch ( BindingResolutionException $e ) {
+            throw new RuntimeException( 'ThemeContext is not available: failed to resolve ThemeContext binding.', 0, $e );
         }
-
-        $path = str_replace('\\', '/', $path);
-
-        return rtrim($path, '/');
     }
 }

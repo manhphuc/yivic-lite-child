@@ -7,11 +7,11 @@
         type="button"
         aria-expanded="false"
         aria-controls="yivicMobileMenu"
-        aria-label="{{ esc_attr__('Open menu', 'yivic-lite') }}"
+        aria-label="{{ $theme->attr( $theme->__( 'Open menu' ) ) }}"
 >
     <img
             class="yivic-lite-header__toggle-icon"
-            src="{{ esc_url(get_template_directory_uri() . '/public-assets/dist/img/yivic-lite-toggle-icon.svg') }}"
+            src="{{ $theme->url( $theme->asset( 'public-assets/dist/img/yivic-lite-toggle-icon.svg' ) ) }}"
             alt=""
             aria-hidden="true"
     >

@@ -5,7 +5,48 @@ declare( strict_types = 1 );
 $textDomain = 'yivic-lite-child';
 
 return [
+    // ------------------------------------------------------------------
+    // Theme Version
+    // ------------------------------------------------------------------
+    // Canonical version identifier for the child theme.
+    //
+    // Why this exists:
+    // - Serves as a single source of truth for the theme version.
+    // - Used for cache-busting assets (scripts/styles).
+    // - May be referenced by runtime services (debug, logging, diagnostics).
+    //
+    // This value MUST be deterministic and should always reflect the
+    // actual theme version defined in the theme header.
+    //
+    // Note:
+    // - Do NOT call wp_get_theme() at runtime.
+    // - The constant is defined during bootstrap to avoid repeated I/O.
+    //
     'version' => YIVIC_LITE_CHILD_VERSION,
+
+    // ------------------------------------------------------------------
+    // Application Metadata
+    // ------------------------------------------------------------------
+    // High-level application identity used by the theme kernel.
+    //
+    // This section intentionally mirrors Laravel's `config('app.*')`
+    // semantics and represents logical application metadata rather than
+    // presentation concerns.
+    //
+    'app' => [
+
+        // Human-readable application name.
+        //
+        // Used for:
+        // - Branding defaults (footer, meta, accessibility labels).
+        // - Logging / debug output.
+        // - Fallback values when no custom branding is provided.
+        //
+        // This value is resolved once at boot time and stored in config
+        // to avoid scattered calls to WordPress globals elsewhere.
+        //
+        'name' => get_bloginfo( 'name' ),
+    ],
 
     // ------------------------------------------------------------------
     // Child theme root (stylesheet directory)
