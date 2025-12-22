@@ -1,6 +1,6 @@
-{{-- resources/views/partials/header/_branding.blade.php --}}
 
-@php
+
+<?php
     /**
      * Branding / Logo partial.
      *
@@ -17,23 +17,26 @@
 
     // Prefer config-driven home URL if you ever add it later; fallback to WP home_url().
     $homeUrl = function_exists('home_url') ? (string) home_url('/') : '/';
-@endphp
+?>
 
 <!-- Branding / Logo -->
 <div class="yivic-lite-header__branding">
     <div class="yivic-lite-header__logo">
-        @if (function_exists('has_custom_logo') && has_custom_logo())
-            {!! get_custom_logo() !!}
-        @else
+        <?php if(function_exists('has_custom_logo') && has_custom_logo()): ?>
+            <?php echo get_custom_logo(); ?>
+
+        <?php else: ?>
             <a
-                href="{{ $theme->url($homeUrl) }}"
+                href="<?php echo e($theme->url($homeUrl)); ?>"
                 class="yivic-lite-header__logo-link"
-                aria-label="{{ $theme->attr($siteName) }}"
+                aria-label="<?php echo e($theme->attr($siteName)); ?>"
             >
                 <span class="yivic-lite-header__site-title">
-                    {{ $theme->e($siteName) }}
+                    <?php echo e($theme->e($siteName)); ?>
+
                 </span>
             </a>
-        @endif
+        <?php endif; ?>
     </div>
 </div>
+<?php /**PATH /var/www/html/yivic-codemall/wp-content/themes/yivic-lite-child/resources/views/partials/header/_branding.blade.php ENDPATH**/ ?>

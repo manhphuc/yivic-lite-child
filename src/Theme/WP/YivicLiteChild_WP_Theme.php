@@ -108,11 +108,39 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
      */
     public function initTheme(): void {
         add_action( 'after_setup_theme', [ $this, 'setup_theme' ] );
+        add_action( 'widgets_init', [ $this, 'register_widgets' ] );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], 20 );
 
         // Admin assets (separate from frontend).
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ], 20 );
     }
+
+    /**
+     * Register widget areas + custom widgets.
+     */
+    public function register_widgets(): void {
+        register_sidebar( [
+            'name'          => __( 'Sidebar 1', 'yivic-lite-child' ),
+            'id'            => 'yivic-lite-child-sidebar-1',
+            'description'   => __( 'Main sidebar for Yivic Lite Child.', 'yivic-lite-child' ),
+
+            /**
+             * IMPORTANT:
+             * - Keep wrapper generic. Do NOT hardcode widget-specific modifier classes here.
+             * - `%2$s` will receive widget's own `classname` from WP_Widget.
+             */
+            'before_widget' => '<section id="%1$s" class="widget yivic-lite-widget %2$s">',
+            'after_widget'  => '</section>',
+
+            // Title wrapper used only when widget outputs `$args['before_title']...`
+            'before_title'  => '<h2 class="yivic-lite-widget__title">',
+            'after_title'   => '</h2>',
+        ] );
+
+        // With Composer PSR-4 autoload, this should be available automatically.
+        register_widget( \Yivic\YivicLiteChild\Theme\Widgets\YivicLiteChildWidgetTabs::class );
+    }
+
 
     /**
      * Get the display name of the child theme.

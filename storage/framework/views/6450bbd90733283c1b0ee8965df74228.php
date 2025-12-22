@@ -1,6 +1,6 @@
-{{-- resources/views/partials/header/_nav.blade.php --}}
 
-@php
+
+<?php
     /**
      * Header navigation partial.
      *
@@ -20,34 +20,35 @@
     if ($siteName === '' && function_exists('get_bloginfo')) {
         $siteName = (string) get_bloginfo('name');
     }
-@endphp
+?>
 
 <!-- Off–canvas menu / mobile + desktop menu wrapper -->
 <div
     class="yivic-lite-header__links nav-links"
     id="yivicMobileMenu"
-    style="background: {{ $theme->attr($header_bg) }}"
+    style="background: <?php echo e($theme->attr($header_bg)); ?>"
 >
     <div class="yivic-lite-header__sidebar-logo sidebar-logo">
         <span class="yivic-lite-header__logo-name logo-name">
-            {{ $theme->e($siteName) }}
+            <?php echo e($theme->e($siteName)); ?>
+
         </span>
 
         <button
             class="yivic-lite-header__close yivicCancel-icon"
             id="yivicMenuClose"
             type="button"
-            aria-label="{{ $theme->attr($theme->__('Close menu')) }}"
+            aria-label="<?php echo e($theme->attr($theme->__('Close menu'))); ?>"
         >
             <img
                 class="yivic-lite-header__close-icon"
-                src="{{ $theme->url($theme->asset('public-assets/dist/img/yivic-lite-cancel-icon.svg')) }}"
-                alt="{{ $theme->attr($theme->__('Close menu')) }}"
+                src="<?php echo e($theme->url($theme->asset('public-assets/dist/img/yivic-lite-cancel-icon.svg'))); ?>"
+                alt="<?php echo e($theme->attr($theme->__('Close menu'))); ?>"
             />
         </button>
     </div>
 
-    @php
+    <?php
         /**
          * wp_nav_menu() is a WordPress API and returns HTML.
          * We keep this in PHP and output as raw HTML below.
@@ -66,7 +67,9 @@
             'depth' => 0,
             'echo' => false,
         ]);
-    @endphp
+    ?>
 
-    {!! $menuHtml !!}
+    <?php echo $menuHtml; ?>
+
 </div>
+<?php /**PATH /var/www/html/yivic-codemall/wp-content/themes/yivic-lite-child/resources/views/partials/header/_nav.blade.php ENDPATH**/ ?>

@@ -1,0 +1,223 @@
+/* ------------------------------------------------------------
+ * Widget Shell (same level as WP widgets)
+ * ------------------------------------------------------------ */
+.yivic-lite-layout__sidebar {
+	.widget {
+		background: $yl-color-white;
+		border-radius: $yl-radius-lg;
+		font-size: $yl-font-size-sm;
+		line-height: $yl-line-height-base;
+		margin-bottom: $yl-space-24;
+		padding: $yl-widget-padding;
+	}
+}
+
+/* ------------------------------------------------------------
+ * Widget wrapper
+ * ------------------------------------------------------------ */
+.yivic-lite-widget {
+	&__header {
+		display: flex;
+		align-items: center;
+		gap: $yl-space-12;
+		margin-bottom: $yl-space-14;
+	}
+
+	&__title {
+		font-size: $yl-font-size-lg;
+		font-weight: $yl-font-weight-xbold;
+		margin: 0;
+	}
+
+	&__bar {
+		flex: 1;
+		height: 0.875rem; // 14px
+		background: $yl-color-bar;
+		border-radius: $yl-radius-md;
+	}
+
+	&__body {
+		margin-top: $yl-space-10;
+	}
+}
+
+/* ------------------------------------------------------------
+ * Tabs component
+ * ------------------------------------------------------------ */
+.yivic-lite-tabs {
+	&__nav {
+		display: flex;
+		gap: $yl-space-6;
+		border-bottom: 1px solid $yl-color-border;
+		margin: 0;
+		padding: 0;
+	}
+
+	&__tab {
+		appearance: none;
+		border: 1px solid $yl-color-border;
+		border-bottom: 0;
+		background: $yl-color-surface;
+		color: #999;
+		padding: $yl-space-10 $yl-space-16;
+		cursor: pointer;
+		font-weight: $yl-font-weight-bold;
+		font-size: $yl-font-size-sm;
+
+		&.is-active {
+			background: $yl-color-white;
+			color: $yl-color-accent;
+			border-top: 0.1875rem solid $yl-color-accent; // 3px
+			position: relative;
+			top: 1px;
+		}
+	}
+
+	&__content {
+		border: 1px solid $yl-color-border;
+		border-top: 0;
+		padding: $yl-space-18 $yl-space-14;
+		background: $yl-color-surface-soft;
+	}
+
+	&__panel {
+		display: none;
+
+		&.is-active {
+			display: block;
+		}
+	}
+}
+
+/* ------------------------------------------------------------
+ * Counter list (Tab 1)
+ * ------------------------------------------------------------ */
+.yivic-lite-tablist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+
+	&__item {
+		display: flex;
+		gap: $yl-space-10;
+		padding: $yl-space-12 0;
+		border-bottom: 1px solid $yl-color-border;
+
+		&:last-child {
+			border-bottom: 0;
+			padding-bottom: 0;
+		}
+	}
+
+	&__counter {
+		font-size: 2em;
+		width: $yl-counter-width;
+		line-height: 0.9;
+		font-weight: $yl-font-weight-black;
+		color: $yl-color-counter;
+		flex: 0 0 auto;
+	}
+
+	&__meta {
+		flex: 1;
+		min-width: 0;
+		color: $yl-color-text;
+	}
+
+	&__badge {
+		&-link {
+			color: $yl-color-white;
+			display: inline-block;
+			padding: $yl-space-4 $yl-space-10;
+			border-radius: $yl-radius-sm;
+			margin-bottom: $yl-space-6;
+			background: $yl-color-badge-default;
+			font-weight: $yl-font-weight-black;
+			letter-spacing: .1em;
+		}
+		&--default { background: $yl-color-badge-default; }
+		&--health { background: $yl-color-badge-health; }
+		&--coin   { background: $yl-color-badge-coin; }
+		&--travel { background: $yl-color-badge-travel; }
+	}
+
+	&__title {
+		display: block;
+		font-size: $yl-font-size-lg;
+		font-weight: $yl-font-weight-black;
+		color: $yl-color-title-link;
+		text-decoration: none;
+		line-height: 1.2;
+		margin: $yl-space-2 0 $yl-space-6;
+	}
+
+	&__date {
+		font-size: $yl-font-size-xs;
+		color: $yl-color-muted;
+	}
+}
+
+/* ------------------------------------------------------------
+ * Media list (Tab 2 & 3)
+ * ------------------------------------------------------------ */
+.yivic-lite-medialist {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+
+	&__item {
+		position: relative;
+		padding: $yl-space-12 0;
+		border-bottom: 1px solid $yl-color-border;
+
+		&:last-child {
+			border-bottom: 0;
+			padding-bottom: 0;
+		}
+	}
+
+	&__link {
+		display: block;
+		position: relative;
+		padding-left: $yl-thumb-offset;
+		min-height: $yl-thumb-size;
+		text-decoration: none;
+		color: $yl-color-text;
+	}
+
+	&__thumb {
+		width: $yl-thumb-size;
+		height: $yl-thumb-size;
+		object-fit: cover;
+		position: absolute;
+		left: 0;
+		top: 0;
+
+		&--avatar {
+			border-radius: $yl-radius-pill;
+		}
+	}
+
+	&__text {
+		font-size: $yl-font-size-sm;
+		line-height: 1.4;
+	}
+
+	&__strong {
+		font-weight: $yl-font-weight-black;
+		color: #000;
+	}
+}
+.yivic-lite-layout__sidebar {
+	.widget {
+		ul {
+			li {
+				.yivic-lite-tablist__badge-link {
+					&:hover {
+						color: $yl-color-white;
+					}
+				}
+			}
+		}
+	}
+}

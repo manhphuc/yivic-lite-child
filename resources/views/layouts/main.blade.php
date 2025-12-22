@@ -1,23 +1,21 @@
-<!DOCTYPE html>
-<html {{ language_attributes() }}>
-<head>
-    <meta charset="{{ bloginfo('charset') }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+{{-- Main layout (Blade) --}}
+<div class="yivic-lite-layout">
+    <div class="yivic-lite-layout__container grid wide">
+        <div class="row">
+            <main id="primary" class="{{ $layout['main'] }}">
+                {!! $content !!}
+            </main>
 
-    <title>@yield('title', get_bloginfo('name'))</title>
-
-    @wp_head
-</head>
-<body {{ body_class() }}>
-
-@include('partials.header')
-
-<main id="content" class="site-content">
-    @yield('content')
-</main>
-
-@include('partials.footer')
-
-@wp_footer
-</body>
-</html>
+            @if ($layout['has_sidebar'])
+                <aside class="{{ $layout['sidebar'] }}">
+                    @if (is_active_sidebar('yivic-lite-sidebar-1'))
+                        @php(dynamic_sidebar('yivic-lite-sidebar-1'))
+                        {{-- @include( 'tmp.widget' ) --}}
+                    @else
+                        @include('partials.sidebar')
+                    @endif
+                </aside>
+            @endif
+        </div>
+    </div>
+</div>

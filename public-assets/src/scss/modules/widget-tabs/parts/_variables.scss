@@ -1,0 +1,81 @@
+/* ==========================================================================
+   Yivic Lite – Design Tokens (REM-based)
+   ========================================================================== */
+
+/* ------------------------------------------------------------
+ * Root
+ * ------------------------------------------------------------ */
+$yl-root-font-size: 16px;
+
+/* ------------------------------------------------------------
+ * Colors
+ * ------------------------------------------------------------ */
+$yl-color-white: #ffffff;
+$yl-color-text: #474747;
+$yl-color-muted: #878787;
+
+$yl-color-border: #e7e7e7;
+$yl-color-surface: #f7f7f7;
+$yl-color-surface-soft: #efefef;
+$yl-color-bar: #f1f1f1;
+
+$yl-color-accent: #ef1616;
+$yl-color-title-link: #3f1a7a;
+$yl-color-counter: #c7c7c7;
+
+/* Badge colors */
+$yl-color-badge-default: #313b45;
+$yl-color-badge-health: #f05a73;
+$yl-color-badge-coin: #5b4a8f;
+$yl-color-badge-travel: #74d88b;
+
+/* Badge colors hover */
+$yl-color-badge-hover-default: #5d2dc6;
+
+/* ------------------------------------------------------------
+ * Typography (REM)
+ * ------------------------------------------------------------ */
+$yl-font-size-xs: 0.75rem;   // 12px
+$yl-font-size-sm: 0.875rem;  // 14px
+$yl-font-size-md: 1rem;      // 16px
+$yl-font-size-lg: 1.125rem;  // 18px
+$yl-font-size-xl: 2rem;      // 32px
+
+$yl-line-height-base: 1.6;
+
+$yl-font-weight-bold: 700;
+$yl-font-weight-xbold: 800;
+$yl-font-weight-black: 900;
+
+/* ------------------------------------------------------------
+ * Spacing (REM)
+ * ------------------------------------------------------------ */
+$yl-space-0: 0;
+$yl-space-2: 0.125rem;   // 2px
+$yl-space-4: 0.25rem;    // 4px
+$yl-space-6: 0.375rem;   // 6px
+$yl-space-8: 0.5rem;     // 8px
+$yl-space-10: 0.625rem;  // 10px
+$yl-space-12: 0.75rem;   // 12px
+$yl-space-14: 0.875rem;  // 14px
+$yl-space-16: 1rem;      // 16px
+$yl-space-18: 1.125rem;  // 18px
+$yl-space-24: 1.5rem;    // 24px
+
+/* ------------------------------------------------------------
+ * Radius
+ * ------------------------------------------------------------ */
+$yl-radius-sm: 0.125rem;   // 2px
+$yl-radius-md: 0.25rem;    // 4px
+$yl-radius-lg: 0.375rem;   // 6px
+$yl-radius-pill: 999em;
+
+/* ------------------------------------------------------------
+ * Sizes
+ * ------------------------------------------------------------ */
+$yl-widget-padding: $yl-space-16;
+$yl-widget-gap: $yl-space-12;
+
+$yl-counter-width: 3.5rem;   // 56px
+$yl-thumb-size: 3.125rem;    // 50px
+$yl-thumb-offset: 4.375rem;  // 70px
