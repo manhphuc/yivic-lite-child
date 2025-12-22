@@ -1,4 +1,4 @@
-@php
+<?php
     /**
      * Footer partial.
      *
@@ -49,12 +49,14 @@
      * - Final output is trusted HTML.
      */
     $copyright = function_exists('wp_kses_post') ? wp_kses_post($rawCopyright) : $rawCopyright;
-@endphp
+?>
 
 <footer class="yivic-lite-footer">
     <div class="yivic-lite-footer__inner">
         <p class="yivic-lite-footer__text">
-            {!! $copyright !!}
+            <?php echo $copyright; ?>
+
         </p>
     </div>
 </footer>
+<?php /**PATH /var/www/html/yivic-codemall/wp-content/themes/yivic-lite-child/resources/views/partials/footer.blade.php ENDPATH**/ ?>

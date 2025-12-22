@@ -1,3 +1,25 @@
-body {
-	color: red;
-}
+/* Import Theming main */
+@import "parts/theming";
+
+// Import Fonts
+@import "parts/font";
+
+// Global Variables
+@import "parts/variables";
+
+@import "parts/mixins";
+
+// Reset global
+@import "parts/reset";
+
+// Base main CSS global
+@import "parts/base";
+
+// ================================
+// Header
+// ================================
+@import "modules/widget-tabs/main";
+
+
+/* Yivic import last main */
+@import "parts/breakpoints";

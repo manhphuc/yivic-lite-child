@@ -1,11 +1,11 @@
-{{-- resources/views/partials/header/_search.blade.php --}}
+
 
 <!-- Search -->
 <div class="yivic-lite-header__search search-box">
     <button
         class="yivic-lite-header__search-icon yivicSearch-icon yivicSearch"
         type="button"
-        aria-label="{{ $theme->attr($theme->__('Search')) }}"
+        aria-label="<?php echo e($theme->attr($theme->__('Search'))); ?>"
         aria-haspopup="dialog"
         aria-controls="yivic-lite-search-panel"
         aria-expanded="false"
@@ -19,11 +19,13 @@
         aria-hidden="true"
         hidden
     >
-        @php
+        <?php
             // get_search_form echoes by default. Capture it.
             $searchForm = get_search_form(false);
-        @endphp
+        ?>
 
-        {!! $searchForm !!}
+        <?php echo $searchForm; ?>
+
     </div>
 </div>
+<?php /**PATH /var/www/html/yivic-codemall/wp-content/themes/yivic-lite-child/resources/views/partials/header/_search.blade.php ENDPATH**/ ?>

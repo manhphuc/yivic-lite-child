@@ -1,1 +1,1 @@
-console.log('hello')
+import './parts/widgets/widgets_tabs';

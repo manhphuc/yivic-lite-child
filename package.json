@@ -19,7 +19,9 @@
     "phpunit": "php -d xdebug.max_nesting_level=512 ./vendor/bin/phpunit",
     "phpunit:coverage": "php -d xdebug.max_nesting_level=512 -d xdebug.mode=coverage ./vendor/bin/phpunit --coverage-text -vvv",
     "phpunit:coverage-html": "php -d xdebug.max_nesting_level=512 -d xdebug.mode=coverage ./vendor/bin/phpunit --coverage-html",
-    "phpunit:coverage-single": "php -d xdebug.max_nesting_level=512 -d xdebug.mode=coverage --no-configuration --colors --bootstrap=tests/bootstrap-unit.php ./vendor/bin/phpunit"
+    "phpunit:coverage-single": "php -d xdebug.max_nesting_level=512 -d xdebug.mode=coverage --no-configuration --colors --bootstrap=tests/bootstrap-unit.php ./vendor/bin/phpunit",
+    "format:blade": "prettier --write \"resources/views/**/*.blade.php\"",
+    "check:blade": "prettier --check \"resources/views/**/*.blade.php\""
   },
   "browserslist": [
     "last 3 versions",
@@ -53,6 +55,8 @@
     "webpack-manifest-plugin": "^5.0.1",
     "typescript": "^5.4.5",
     "ts-loader": "^9.5.1",
-    "i": "^0.3.7"
+    "i": "^0.3.7",
+    "prettier": "^2",
+    "prettier-plugin-blade": "^1"
   }
 }
