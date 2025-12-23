@@ -52,6 +52,9 @@ config.codekit
 ### OS / Hosting garbage
 Thumbs.db
 
+# Laravel-style runtime
+/storage/*
+
 ### Others (optional)
 # Do NOT ignore robots.txt in themes/plugins
 # /robots.txt
