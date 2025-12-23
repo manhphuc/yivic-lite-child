@@ -54,6 +54,7 @@ Thumbs.db
 
 # Laravel-style runtime
 /storage/*
+!/storage/.gitkeep
 
 ### Others (optional)
 # Do NOT ignore robots.txt in themes/plugins
