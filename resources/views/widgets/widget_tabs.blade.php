@@ -1,12 +1,25 @@
 {{--
     Widget Tabs (Blade)
+
     Variables:
     - $title (string)
     - $dom_id (string)
-    - $featured (array)
-    - $recent (array)
-    - $comments (array)
+    - $featured (array<int, array<string, mixed>>)
+    - $recent (array<int, array<string, mixed>>)
+    - $comments (array<int, array<string, mixed>>)
 --}}
+
+@php
+    $dom_id   = (string) ( $dom_id ?? 'widget-tabs-' . uniqid() );
+    $tabs = [
+        1 => ['label' => __('Featured', 'yivic-lite-child')],
+        2 => ['label' => __('Recent', 'yivic-lite-child')],
+        3 => ['label' => __('Comments', 'yivic-lite-child')],
+    ];
+
+    $panelId = fn (int $i) => $dom_id . '-panel-' . $i;
+    $tabId   = fn (int $i) => $dom_id . '-tab-' . $i;
+@endphp
 
 <header class="yivic-lite-widget__header">
     <h2 class="yivic-lite-widget__title">{{ $title }}</h2>
@@ -15,161 +28,189 @@
 
 <div class="yivic-lite-widget__body">
     <div class="yivic-lite-tabs" data-yivic-lite-tabs>
-        <nav class="yivic-lite-tabs__nav" role="tablist" aria-label="{{ __('Widget tabs', 'yivic-lite-child') }}">
-            <button
-                class="yivic-lite-tabs__tab is-active"
-                type="button"
-                role="tab"
-                aria-selected="true"
-                aria-controls="{{ $dom_id }}-panel-1"
-                id="{{ $dom_id }}-tab-1"
-                tabindex="0"
-            >
-                {{ __('Featured', 'yivic-lite-child') }}
-            </button>
-
-            <button
-                class="yivic-lite-tabs__tab"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="{{ $dom_id }}-panel-2"
-                id="{{ $dom_id }}-tab-2"
-                tabindex="-1"
-            >
-                {{ __('Recent', 'yivic-lite-child') }}
-            </button>
-
-            <button
-                class="yivic-lite-tabs__tab"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                aria-controls="{{ $dom_id }}-panel-3"
-                id="{{ $dom_id }}-tab-3"
-                tabindex="-1"
-            >
-                {{ __('Comments', 'yivic-lite-child') }}
-            </button>
+        <nav
+                class="yivic-lite-tabs__nav"
+                role="tablist"
+                aria-label="{{ __( 'Widget tabs', 'yivic-lite-child' ) }}"
+        >
+            @foreach ($tabs as $i => $t)
+                @php $isActive = ($i === 1); @endphp
+                <button
+                        class="yivic-lite-tabs__tab{{ $isActive ? ' is-active' : '' }}"
+                        type="button"
+                        role="tab"
+                        aria-selected="{{ $isActive ? 'true' : 'false' }}"
+                        aria-controls="{{ $panelId($i) }}"
+                        id="{{ $tabId($i) }}"
+                        tabindex="{{ $isActive ? '0' : '-1' }}"
+                >
+                    {{ $t['label'] }}
+                </button>
+            @endforeach
         </nav>
 
         <div class="yivic-lite-tabs__content">
             {{-- Panel 1: Featured --}}
             <section
-                class="yivic-lite-tabs__panel is-active"
-                id="{{ $dom_id }}-panel-1"
-                role="tabpanel"
-                aria-labelledby="{{ $dom_id }}-tab-1"
+                    class="yivic-lite-tabs__panel is-active"
+                    id="{{ $panelId(1) }}"
+                    role="tabpanel"
+                    aria-labelledby="{{ $tabId(1) }}"
             >
-                @if (empty($featured))
-                    <p>No featured posts yet.</p>
-                @else
-                    <ul class="yivic-lite-tablist">
-                        @foreach ($featured as $i => $p)
+                @forelse ($featured as $i => $p)
+                    @if ($loop->first)
+                        <ul class="yivic-lite-tablist">
+                            @endif
+
+                            @php
+                                $titleText = (string) ($p['title'] ?? '');
+                                $linkUrl   = (string) ($p['link'] ?? '#');
+                                $catName   = (string) ($p['cat_name'] ?? '');
+                                $catLink   = (string) ($p['cat_link'] ?? '');
+                                $dateIso   = (string) ($p['date'] ?? '');
+                                $dateHum   = (string) ($p['date_hum'] ?? '');
+                                $counter   = str_pad((string) ((int) $i + 1), 2, '0', STR_PAD_LEFT);
+                            @endphp
+
                             <li class="yivic-lite-tablist__item">
-                                <span class="yivic-lite-tablist__counter">
-                                    {{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}.
-                                </span>
+                                <span class="yivic-lite-tablist__counter">{{ $counter }}.</span>
 
                                 <div class="yivic-lite-tablist__meta">
-                                    @if (! empty($p['cat_name']) && ! empty($p['cat_link']))
+                                    @if ($catName !== '' && $catLink !== '')
                                         <span class="yivic-lite-tablist__badge yivic-lite-tablist__badge--default">
-                                            <a class="yivic-lite-tablist__badge-link" href="{{ $p['cat_link'] }}">
-                                                {{ $p['cat_name'] }}
-                                            </a>
-                                        </span>
+                                    <a class="yivic-lite-tablist__badge-link" href="{{ e($catLink) }}">
+                                        {{ $catName }}
+                                    </a>
+                                </span>
                                     @endif
 
-                                    <a class="yivic-lite-tablist__title" href="{{ $p['link'] }}">
-                                        {{ $p['title'] }}
+                                    <a class="yivic-lite-tablist__title" href="{{ e($linkUrl) }}">
+                                        {{ $titleText }}
                                     </a>
 
-                                    @if (! empty($p['date']) && ! empty($p['date_hum']))
-                                        <time class="yivic-lite-tablist__date" datetime="{{ $p['date'] }}">
-                                            {{ $p['date_hum'] }}
+                                    @if ($dateIso !== '' && $dateHum !== '')
+                                        <time class="yivic-lite-tablist__date" datetime="{{ e($dateIso) }}">
+                                            {{ $dateHum }}
                                         </time>
                                     @endif
                                 </div>
                             </li>
-                        @endforeach
-                    </ul>
-                @endif
+
+                            @if ($loop->last)
+                        </ul>
+                    @endif
+                @empty
+                    <p>{{ __('No featured posts yet.', 'yivic-lite-child') }}</p>
+                @endforelse
             </section>
 
             {{-- Panel 2: Recent --}}
             <section
-                class="yivic-lite-tabs__panel"
-                id="{{ $dom_id }}-panel-2"
-                role="tabpanel"
-                aria-labelledby="{{ $dom_id }}-tab-2"
-                hidden
+                    class="yivic-lite-tabs__panel"
+                    id="{{ $panelId(2) }}"
+                    role="tabpanel"
+                    aria-labelledby="{{ $tabId(2) }}"
+                    hidden
             >
-                @if (empty($recent))
-                    <p>No recent posts.</p>
-                @else
-                    <ul class="yivic-lite-medialist">
-                        @foreach ($recent as $p)
+                @forelse ($recent as $p)
+                    @if ($loop->first)
+                        <ul class="yivic-lite-medialist">
+                            @endif
+
+                            @php
+                                $titleText = (string) ($p['title'] ?? '');
+                                $linkUrl   = (string) ($p['link'] ?? '#');
+                                $thumbUrl  = (string) ($p['thumb'] ?? '');
+                                $excerpt   = (string) ($p['excerpt'] ?? '');
+                            @endphp
+
                             <li class="yivic-lite-medialist__item">
                                 <a
-                                    class="yivic-lite-medialist__link"
-                                    href="{{ $p['link'] }}"
-                                    title="{{ $p['title'] }}"
+                                        class="yivic-lite-medialist__link"
+                                        href="{{ e($linkUrl) }}"
+                                        title="{{ e($titleText) }}"
                                 >
-                                    @if (! empty($p['thumb']))
+                                    @if ($thumbUrl !== '')
                                         <img
-                                            class="yivic-lite-medialist__thumb"
-                                            src="{{ $p['thumb'] }}"
-                                            alt=""
-                                            width="100"
-                                            height="100"
+                                                class="yivic-lite-medialist__thumb"
+                                                src="{{ e($thumbUrl) }}"
+                                                alt=""
+                                                loading="lazy"
+                                                decoding="async"
+                                                width="100"
+                                                height="100"
                                         />
                                     @endif
 
                                     <span class="yivic-lite-medialist__text">
-                                        <strong class="yivic-lite-medialist__strong">{{ $p['title'] }}:</strong>
-                                        {{ $p['excerpt'] ?? '' }}
-                                    </span>
+                                <strong class="yivic-lite-medialist__strong">{{ $titleText }}</strong>
+                                @if ($excerpt !== '')
+                                            : {{ $excerpt }}
+                                        @endif
+                            </span>
                                 </a>
                             </li>
-                        @endforeach
-                    </ul>
-                @endif
+
+                            @if ($loop->last)
+                        </ul>
+                    @endif
+                @empty
+                    <p>{{ __('No recent posts.', 'yivic-lite-child') }}</p>
+                @endforelse
             </section>
 
             {{-- Panel 3: Comments --}}
             <section
-                class="yivic-lite-tabs__panel"
-                id="{{ $dom_id }}-panel-3"
-                role="tabpanel"
-                aria-labelledby="{{ $dom_id }}-tab-3"
-                hidden
+                    class="yivic-lite-tabs__panel"
+                    id="{{ $panelId(3) }}"
+                    role="tabpanel"
+                    aria-labelledby="{{ $tabId(3) }}"
+                    hidden
             >
-                @if (empty($comments))
-                    <p>No comments.</p>
-                @else
-                    <ul class="yivic-lite-medialist">
-                        @foreach ($comments as $c)
+                @forelse ($comments as $c)
+                    @if ($loop->first)
+                        <ul class="yivic-lite-medialist">
+                            @endif
+
+                            @php
+                                $author = (string) ($c['author'] ?? '');
+                                $text   = (string) ($c['text'] ?? '');
+                                $link   = (string) ($c['link'] ?? '#');
+                                $avatar = (string) ($c['avatar'] ?? '');
+                                $title  = __('Comment', 'yivic-lite-child');
+                            @endphp
+
                             <li class="yivic-lite-medialist__item">
-                                <a class="yivic-lite-medialist__link" href="{{ $c['link'] ?? '#' }}" title="Comment">
-                                    @if (! empty($c['avatar']))
+                                <a class="yivic-lite-medialist__link" href="{{ e($link) }}" title="{{ e($title) }}">
+                                    @if ($avatar !== '')
                                         <img
-                                            class="yivic-lite-medialist__thumb yivic-lite-medialist__thumb--avatar"
-                                            src="{{ $c['avatar'] }}"
-                                            alt=""
-                                            width="100"
-                                            height="100"
+                                                class="yivic-lite-medialist__thumb yivic-lite-medialist__thumb--avatar"
+                                                src="{{ e($avatar) }}"
+                                                alt=""
+                                                loading="lazy"
+                                                decoding="async"
+                                                width="100"
+                                                height="100"
                                         />
                                     @endif
 
                                     <span class="yivic-lite-medialist__text">
-                                        <strong class="yivic-lite-medialist__strong">{{ $c['author'] ?? '' }}:</strong>
-                                        {{ $c['text'] ?? '' }}
-                                    </span>
+                                @if ($author !== '')
+                                            <strong class="yivic-lite-medialist__strong">{{ $author }}</strong>
+                                        @endif
+                                        @if ($text !== '')
+                                            : {{ $text }}
+                                        @endif
+                            </span>
                                 </a>
                             </li>
-                        @endforeach
-                    </ul>
-                @endif
+
+                            @if ($loop->last)
+                        </ul>
+                    @endif
+                @empty
+                    <p>{{ __('No comments.', 'yivic-lite-child') }}</p>
+                @endforelse
             </section>
         </div>
     </div>
