@@ -8,29 +8,29 @@
      */
 
     // Guard: valid query
-    if (! ($query instanceof \WP_Query)) {
+    if ( ! ( $query instanceof \WP_Query ) ) {
         return;
     }
 
     // No pagination needed
-    if ($query->max_num_pages <= 1) {
+    if ( $query->max_num_pages <= 1 ) {
         return;
     }
 
-    $current = max(1, get_query_var('paged'));
+    $current = max( 1, get_query_var( 'paged' ) );
 
-    $pagination = paginate_links([
-        'total' => (int) $query->max_num_pages,
-        'current' => $current,
-        'mid_size' => 2,
+    $pagination     = paginate_links( [
+        'total'     => (int) $query->max_num_pages,
+        'current'   => $current,
+        'mid_size'  => 2,
         'prev_text' => '&laquo;',
         'next_text' => '&raquo;',
-        'type' => 'list', // <ul>…</ul>
-    ]);
+        'type'      => 'list', // <ul>…</ul>
+    ] );
 @endphp
 
-@if (! empty($pagination))
-    <nav class="yivic-pagination" aria-label="{{ esc_attr__('Posts pagination', 'yivic-lite-child') }}">
-        {!! wp_kses_post($pagination) !!}
+@if ( ! empty( $pagination ) )
+    <nav class="yivic-pagination" aria-label="{{ $theme->attr( $theme->__( 'Posts pagination' )) }}">
+        {!! wp_kses_post( $pagination ) !!}
     </nav>
 @endif

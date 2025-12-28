@@ -7,12 +7,12 @@
 <div class="yivic-lite-sidebar">
     <div class="yivic-lite-sidebar__widget">
         <h2 class="yivic-lite-sidebar__title">
-            {{ __('Sidebar', 'yivic-lite-child') }}
+            {{ $theme->__( 'Sidebar' ) }}
         </h2>
 
         <div class="yivic-lite-sidebar__content">
             <p>
-                {{ __('Add widgets to "Sidebar 1" in Appearance → Widgets.', 'yivic-lite-child') }}
+                {{ $theme->__( 'Add widgets to "Sidebar 1" in Appearance → Widgets.' ) }}
             </p>
         </div>
     </div>
