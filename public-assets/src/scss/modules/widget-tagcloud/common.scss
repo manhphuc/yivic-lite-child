@@ -1,0 +1,57 @@
+/**
+ * ------------------------------------------------------------
+ * Widget: Tag Cloud
+ * ------------------------------------------------------------
+ */
+
+.yivic-widget-tagcloud {
+	padding: 16px;
+
+	&__head {
+		margin-bottom: 12px;
+	}
+
+	&__title {
+		font-size: 1.25rem;
+		font-weight: 700;
+		margin: 0;
+	}
+}
+
+/* Tag list container */
+.yivic-tagcloud {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $yivic-tagcloud-gap;
+}
+
+/* Individual tag */
+.yivic-tagcloud__item {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	padding: $yivic-tagcloud-padding-y $yivic-tagcloud-padding-x;
+
+	font-size: $yivic-tagcloud-font-size;
+	font-weight: $yivic-tagcloud-font-weight;
+	line-height: 1.2;
+
+	color: $yivic-tagcloud-color-light;
+	text-decoration: none;
+	white-space: nowrap;
+
+	border-radius: $yivic-tagcloud-radius;
+
+	transition: transform .15s ease, opacity .15s ease;
+
+	&:hover {
+		opacity: .9;
+		transform: translateY(-1px);
+	}
+
+	/* Color cycling (lightweight, no JS) */
+	&:nth-child(3n + 1) { background-color: $yivic-tagcloud-bg-green; }
+	&:nth-child(3n + 2) { background-color: $yivic-tagcloud-bg-red; }
+	&:nth-child(3n + 3) { background-color: $yivic-tagcloud-bg-purple; }
+}

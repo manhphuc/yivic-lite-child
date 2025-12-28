@@ -139,6 +139,7 @@ final class YivicLiteChild_WP_Theme extends YivicLite_WP_Theme {
 
         // With Composer PSR-4 autoload, this should be available automatically.
         register_widget( \Yivic\YivicLiteChild\Theme\Widgets\YivicLiteChildWidgetTabs::class );
+        register_widget( \Yivic\YivicLiteChild\Theme\Widgets\YivicLiteChildWidgetTagCloud::class );
     }
 
 
