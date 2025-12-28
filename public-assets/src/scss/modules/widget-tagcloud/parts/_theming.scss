@@ -1,0 +1,27 @@
+/**
+ * ------------------------------------------------------------
+ * Yivic Theme – Breakpoints & Media Tokens
+ * ------------------------------------------------------------
+ *
+ * Purpose:
+ * - Central place for responsive breakpoints
+ * - Used by mixins & layout logic
+ * - Must be imported BEFORE variables & common styles
+ *
+ * Rules:
+ * - Define tokens only (no CSS output)
+ * - Use !default to allow child overrides
+ * ------------------------------------------------------------
+ */
+
+/* ------------------------------------------------------------
+ * Media Breakpoints
+ * ------------------------------------------------------------
+ * Mobile-first philosophy:
+ * - Base styles: < md
+ * - md: tablet
+ * - lg: desktop / wide
+ */
+
+$yivic-breakpoint-md: 768px !default;   // Tablet and up
+$yivic-breakpoint-lg: 1200px !default;  // Desktop and up
