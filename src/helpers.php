@@ -4,9 +4,9 @@ declare( strict_types = 1 );
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Yivic\YivicLiteChild\Foundation\Application;
 
-if ( ! function_exists('app' ) ) {
+if ( ! function_exists('theme_container' ) ) {
     /**
-     * Laravel-like app() helper (theme-scoped).
+     * Theme-scoped resolver helper (collision-free).
      *
      * This helper is intentionally minimal and side-effect free.
      *
@@ -22,10 +22,10 @@ if ( ! function_exists('app' ) ) {
      * @param  class-string<T>|string|null $abstract Container binding / class name.
      * @return ($abstract is null ? Application : T|mixed)
      *
-     * @throws RuntimeException When the theme app is not bootstrapped yet.
+     * @throws RuntimeException When the theme theme_container is not bootstrapped yet.
      * @throws RuntimeException When the container cannot resolve the service.
      */
-    function app( ?string $abstract = null ): mixed {
+    function theme_container( ?string $abstract = null ): mixed {
         $application = $GLOBALS['yivic_theme_app'] ?? null;
 
         if ( ! $application instanceof Application ) {
@@ -41,7 +41,7 @@ if ( ! function_exists('app' ) ) {
         } catch ( BindingResolutionException $e ) {
             throw new RuntimeException(
                 'Container cannot resolve [' . $abstract . ']. ' .
-                'Ensure the service is bound (e.g. ViewServiceProvider::register()) before calling app().',
+                'Ensure the service is bound (e.g. ViewServiceProvider::register()) before calling theme_container().',
                 0,
                 $e
             );
@@ -70,7 +70,7 @@ if ( ! function_exists( 'theme_view' ) ) {
      */
     function theme_view( string $name, array $data = [], array $mergeData = [] ): string {
         /** @var \Illuminate\Contracts\View\Factory $factory */
-        $factory = app( \Illuminate\Contracts\View\Factory::class );
+        $factory = theme_container( \Illuminate\Contracts\View\Factory::class );
 
         return $factory->make( $name, $data, $mergeData )->render();
     }
